@@ -1,3 +1,5 @@
+import { saveTrainingPlan, getTrainingPlans, deleteTrainingPlan } from './database.js';
+
 // Check authentication
 const user = JSON.parse(localStorage.getItem('user'));
 if (!user) {
@@ -71,40 +73,56 @@ class PlannerUI {
         this.renderPlansGrid();
     }
 
-    renderPlansGrid() {
-        const plans = JSON.parse(localStorage.getItem('trainingPlans') || '{}');
+    async renderPlansGrid() {
+        const plans = await getTrainingPlans();
         this.plansGrid.innerHTML = '';
 
-        Object.entries(plans).forEach(([name, plan]) => {
+        plans.forEach(plan => {
             const card = document.createElement('div');
             card.className = 'plan-card';
             card.innerHTML = `
-                <h3>${name}</h3>
+                <h3>${plan.name}</h3>
                 <div class="plan-card-actions">
                     <button class="edit-name-btn">Edit Name</button>
                     <button class="delete-plan-btn">Delete</button>
                 </div>
             `;
             
-            card.querySelector('h3').addEventListener('click', () => this.loadPlan(name));
+            card.querySelector('h3').addEventListener('click', () => this.loadPlan(plan));
             
-            card.querySelector('.edit-name-btn').addEventListener('click', (e) => {
+            card.querySelector('.edit-name-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const newName = prompt('Enter new name for plan:', name);
-                if (newName && newName !== name) {
-                    this.renamePlan(name, newName);
+                const newName = prompt('Enter new name for plan:', plan.name);
+                if (newName && newName !== plan.name) {
+                    plan.name = newName;
+                    await saveTrainingPlan(plan);
+                    this.renderPlansGrid();
                 }
             });
 
-            card.querySelector('.delete-plan-btn').addEventListener('click', (e) => {
+            card.querySelector('.delete-plan-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (confirm('Are you sure you want to delete this plan?')) {
-                    this.deletePlan(name);
+                    await deleteTrainingPlan(plan.id);
+                    this.renderPlansGrid();
                 }
             });
 
             this.plansGrid.appendChild(card);
         });
+    }
+
+    async savePlan() {
+        await saveTrainingPlan(this.currentPlan);
+        alert('Plan saved successfully!');
+        this.showPlansList();
+    }
+
+    loadPlan(plan) {
+        const loadedPlan = new TrainingPlan(plan.name);
+        loadedPlan.weeks = plan.weeks;
+        loadedPlan.id = plan.id;
+        this.showPlanDetail(loadedPlan);
     }
 
     renamePlan(oldName, newName) {
@@ -212,6 +230,16 @@ class PlannerUI {
     }
     
     showBlockDetail(block) {
+        // Find the week and day indices for the block
+        this.currentPlan.weeks.forEach((week, weekIndex) => {
+            week.forEach((day, dayIndex) => {
+                if (day && day.includes(block)) {
+                    this.currentWeekIndex = weekIndex;
+                    this.currentDayIndex = dayIndex;
+                }
+            });
+        });
+    
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.innerHTML = `
@@ -314,24 +342,6 @@ class PlannerUI {
     addWeek() {
         this.currentPlan.addWeek();
         this.renderAllWeeks();
-    }
-
-    savePlan() {
-        const plans = JSON.parse(localStorage.getItem('trainingPlans') || '{}');
-        plans[this.currentPlan.name] = this.currentPlan;
-        localStorage.setItem('trainingPlans', JSON.stringify(plans));
-        alert('Plan saved successfully!');
-        this.showPlansList();
-    }
-
-    loadPlan(planName) {
-        const plans = JSON.parse(localStorage.getItem('trainingPlans') || '{}');
-        const plan = plans[planName];
-        if (plan) {
-            const loadedPlan = new TrainingPlan(plan.name);
-            loadedPlan.weeks = plan.weeks;
-            this.showPlanDetail(loadedPlan);
-        }
     }
 }
 
