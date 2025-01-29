@@ -10,6 +10,7 @@ async function loadNavbar() {
         const user = JSON.parse(localStorage.getItem('user'));
         const authLink = document.querySelector('.nav-auth');
         const dashboardLink = document.querySelector('.nav-dashboard');
+        const plannerLink = document.querySelector('.nav-planner');
         
         if (user) {
             authLink.textContent = 'Logout';
@@ -20,10 +21,12 @@ async function loadNavbar() {
                 window.location.href = '/auth.html';
             });
             dashboardLink.style.display = 'inline';
+            plannerLink.style.display = 'inline';
         } else {
             authLink.textContent = 'Login';
             authLink.href = '/auth.html';
             dashboardLink.style.display = 'none';
+            plannerLink.style.display = 'none';
         }
     } catch (error) {
         console.error('Error loading navbar:', error);

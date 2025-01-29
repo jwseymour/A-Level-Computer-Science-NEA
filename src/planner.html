@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Planner</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="/js/components/navbar.js"></script>
+</head>
+<body>
+    <script>
+        loadNavbar();
+    </script>
+    <div class="planner-container">
+        <h1>Training Planner</h1>
+        
+        <!-- Plans List View -->
+        <div id="plansListView">
+            <div class="plans-grid" id="plansGrid">
+                <!-- Plans will be dynamically added here -->
+            </div>
+            <button id="createPlanBtn" class="create-plan-btn">Create New Plan</button>
+        </div>
+
+        <!-- Plan Detail View (initially hidden) -->
+        <div id="planDetailView" class="hidden">
+            <div class="plan-header">
+                <h2 id="planName">Plan Name</h2>
+                <button id="backToPlansBtn">Back to Plans</button>
+                <button id="savePlanBtn">Save Plan</button>
+            </div>
+
+            <div id="weeksContainer">
+                <!-- Weeks will be dynamically added here -->
+            </div>
+            
+            <button id="addWeekBtn" class="add-week-btn">Add Week</button>
+        </div>
+
+        <!-- Modal for adding/editing blocks -->
+        <div id="blockModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Add Training Block</h2>
+                <form id="blockForm">
+                    <input type="time" id="blockTime" required>
+                    <input type="text" id="blockTitle" placeholder="Block Title" required>
+                    <textarea id="blockDescription" placeholder="Description" rows="4"></textarea>
+                    <div class="modal-buttons">
+                        <button type="submit">Save</button>
+                        <button type="button" id="cancelBlockBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="js/planner.js"></script>
+</body>
+</html>
