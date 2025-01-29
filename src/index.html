@@ -3,30 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Fitness Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="/js/components/navbar.js"></script>
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Website</h1>
-        <nav>
-            <ul>
-                <li><a href="#home">Home</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+    <script>
+        loadNavbar();
+    </script>
+    <div class="landing-container">
+        <header>
+            <h1>Fitness Tracker</h1>
+            <nav>
+                <ul>
+                    <li><a href="auth.html">Login/Register</a></li>
+                </ul>
+            </nav>
+        </header>
 
-    <main>
-        <section id="home">
-            <h2>Home</h2>
-            <p>Welcome to my website! This is the main content area.</p>
-        </section>
-    </main>
+        <main>
+            <section class="hero">
+                <h2>Track Your Fitness Journey</h2>
+                <p>Specialized tools and resources for rock climbing enthusiasts</p>
+                <a href="auth.html" class="cta-button">Get Started</a>
+            </section>
+        </main>
 
-    <footer>
-        <p>&copy; 2024 My Website. All rights reserved.</p>
-    </footer>
+        <footer>
+            <p>&copy; 2024 Fitness Tracker. All rights reserved.</p>
+        </footer>
+    </div>
 </body>
 </html>
