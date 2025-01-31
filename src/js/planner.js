@@ -75,6 +75,7 @@ class PlannerUI {
 
     async renderPlansGrid() {
         const plans = await getTrainingPlans();
+        console.log(plans)
         this.plansGrid.innerHTML = '';
 
         plans.forEach(plan => {
@@ -83,22 +84,11 @@ class PlannerUI {
             card.innerHTML = `
                 <h3>${plan.name}</h3>
                 <div class="plan-card-actions">
-                    <button class="edit-name-btn">Edit Name</button>
                     <button class="delete-plan-btn">Delete</button>
                 </div>
             `;
             
             card.querySelector('h3').addEventListener('click', () => this.loadPlan(plan));
-            
-            card.querySelector('.edit-name-btn').addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const newName = prompt('Enter new name for plan:', plan.name);
-                if (newName && newName !== plan.name) {
-                    plan.name = newName;
-                    await saveTrainingPlan(plan);
-                    this.renderPlansGrid();
-                }
-            });
 
             card.querySelector('.delete-plan-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -120,8 +110,27 @@ class PlannerUI {
 
     loadPlan(plan) {
         const loadedPlan = new TrainingPlan(plan.name);
-        loadedPlan.weeks = plan.weeks;
         loadedPlan.id = plan.id;
+        
+        // Initialize weeks array
+        const maxWeek = Math.max(...plan.blocks.map(b => b.week_number), 0);
+        loadedPlan.weeks = Array(maxWeek + 1).fill().map(() => []);
+        
+        // Add blocks to appropriate weeks/days
+        plan.blocks.forEach(block => {
+            if (!loadedPlan.weeks[block.week_number]) {
+                loadedPlan.weeks[block.week_number] = [];
+            }
+            if (!loadedPlan.weeks[block.week_number][block.day_number]) {
+                loadedPlan.weeks[block.week_number][block.day_number] = [];
+            }
+            loadedPlan.weeks[block.week_number][block.day_number].push({
+                time: block.time,
+                title: block.title,
+                description: block.description
+            });
+        });
+        
         this.showPlanDetail(loadedPlan);
     }
 

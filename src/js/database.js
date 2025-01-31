@@ -1,66 +1,57 @@
-const DB_NAME = 'fitnessTracker';
-const DB_VERSION = 1;
-
-function openDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => resolve(request.result);
-
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-
-            // Create training plans store
-            if (!db.objectStoreNames.contains('trainingPlans')) {
-                const store = db.createObjectStore('trainingPlans', { keyPath: 'id', autoIncrement: true });
-                store.createIndex('userId', 'userId', { unique: false });
-                store.createIndex('name', 'name', { unique: false });
-            }
-        };
-    });
+async function getTrainingPlans() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const response = await fetch(`/api/training-plans/${user.id}`);
+    if (!response.ok) throw new Error('Failed to fetch plans');
+    return response.json();
 }
 
 async function saveTrainingPlan(plan) {
-    const db = await openDB();
-    const tx = db.transaction('trainingPlans', 'readwrite');
-    const store = tx.objectStore('trainingPlans');
-    
+    console.log(plan);
     const user = JSON.parse(localStorage.getItem('user'));
-    plan.userId = user.id;
-
-    return new Promise((resolve, reject) => {
-        const request = plan.id ? store.put(plan) : store.add(plan);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function getTrainingPlans() {
-    const db = await openDB();
-    const tx = db.transaction('trainingPlans', 'readonly');
-    const store = tx.objectStore('trainingPlans');
-    const userIndex = store.index('userId');
     
-    const user = JSON.parse(localStorage.getItem('user'));
-
-    return new Promise((resolve, reject) => {
-        const request = userIndex.getAll(IDBKeyRange.only(user.id));
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+    if (!plan.id) {
+        // Create new plan
+        const response = await fetch('/api/training-plans', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: plan.name, userId: user.id })
+        });
+        if (!response.ok) throw new Error('Failed to create plan');
+        const { id } = await response.json();
+        plan.id = id;
+    }
+    
+    // Save blocks
+    const blocks = [];
+    plan.weeks.forEach((week, weekIndex) => {
+        week.forEach((day, dayIndex) => {
+            if (day) {
+                day.forEach(block => {
+                    blocks.push({
+                        ...block,
+                        weekNumber: weekIndex,
+                        dayNumber: dayIndex
+                    });
+                });
+            }
+        });
     });
+    
+    const response = await fetch(`/api/training-plans/${plan.id}/blocks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocks })
+    });
+    
+    if (!response.ok) throw new Error('Failed to save blocks');
+    return plan.id;
 }
 
 async function deleteTrainingPlan(id) {
-    const db = await openDB();
-    const tx = db.transaction('trainingPlans', 'readwrite');
-    const store = tx.objectStore('trainingPlans');
-
-    return new Promise((resolve, reject) => {
-        const request = store.delete(id);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+    const response = await fetch(`/api/training-plans/${id}`, {
+        method: 'DELETE'
     });
+    if (!response.ok) throw new Error('Failed to delete plan');
 }
 
-export { openDB, saveTrainingPlan, getTrainingPlans, deleteTrainingPlan };
+export { saveTrainingPlan, getTrainingPlans, deleteTrainingPlan };
