@@ -132,21 +132,42 @@ app.post('/api/login', async (req, res) => {
   });
 });
 
-// Training Blocks endpoints
-app.post('/api/blocks', async (req, res) => {
+// Add this after your other endpoints
+app.get('/api/blocks', authenticateUser, (req, res) => {
+  const userId = req.user.id;
+  
+  db.all(
+      'SELECT * FROM training_blocks WHERE user_id = ? ORDER BY created_at DESC',
+      [userId],
+      (err, blocks) => {
+          if (err) {
+              res.status(400).json({ error: err.message });
+              return;
+          }
+          res.json(blocks);
+      }
+  );
+});
+
+app.post('/api/blocks', authenticateUser, (req, res) => {
   const { title, description } = req.body;
-  const userId = req.user.id; // Assuming you have authentication middleware
+  const userId = req.user.id;
 
   db.run(
-    'INSERT INTO training_blocks (user_id, title, description) VALUES (?, ?, ?)',
-    [userId, title, description],
-    function(err) {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
+      'INSERT INTO training_blocks (user_id, title, description) VALUES (?, ?, ?)',
+      [userId, title, description],
+      function(err) {
+          if (err) {
+              res.status(400).json({ error: err.message });
+              return;
+          }
+          res.json({
+              id: this.lastID,
+              user_id: userId,
+              title,
+              description
+          });
       }
-      res.json({ id: this.lastID });
-    }
   );
 });
 
@@ -214,8 +235,7 @@ app.get('/api/plans', async (req, res) => {
 app.post('/api/plans', async (req, res) => {
   const { title, weeks } = req.body;
   const userId = req.user.id;
-  console.log(userId, title, weeks);
-
+  
   db.serialize(() => {
       db.run('BEGIN TRANSACTION');
 
@@ -233,27 +253,34 @@ app.post('/api/plans', async (req, res) => {
               let weekInsertError = false;
 
               weeks.forEach((week, weekIndex) => {
-                  db.run(
-                      'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                      [planId, weekIndex + 1],
-                      function(err) {
-                          if (err) {
-                              weekInsertError = true;
-                              return;
-                          }
-
-                          const weekId = this.lastID;
-                          week.days.forEach((day) => {
-                              day.blocks.forEach((block) => {
-                                  db.run(
-                                      'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                                      [weekId, day.dayOfWeek, block.blockId, block.timeSlot]
-                                  );
-                              });
-                          });
-                      }
-                  );
-              });
+                db.run(
+                    'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+                    [planId, weekIndex + 1],
+                    function(err) {
+                        if (err) {
+                            weekInsertError = true;
+                            return;
+                        }
+            
+                        const weekId = this.lastID;
+                        
+                        // Add null checks for week.days
+                        if (week && week.days && Array.isArray(week.days)) {
+                            week.days.forEach((day) => {
+                                // Add null check for day.blocks
+                                if (day && day.blocks && Array.isArray(day.blocks)) {
+                                    day.blocks.forEach((block) => {
+                                        db.run(
+                                            'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
+                                            [weekId, day.dayOfWeek, block.blockId, block.timeSlot]
+                                        );
+                                    });
+                                }
+                            });
+                        }
+                    }
+                );
+            });
 
               if (weekInsertError) {
                   db.run('ROLLBACK');
@@ -293,26 +320,33 @@ app.put('/api/plans/:id', async (req, res) => {
               let weekInsertError = false;
 
               weeks.forEach((week, weekIndex) => {
-                  db.run(
-                      'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                      [planId, weekIndex + 1],
-                      function(err) {
-                          if (err) {
-                              weekInsertError = true;
-                              return;
-                          }
-
-                          const weekId = this.lastID;
-                          week.days.forEach((day) => {
-                              day.blocks.forEach((block) => {
-                                  db.run(
-                                      'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                                      [weekId, day.dayOfWeek, block.blockId, block.timeSlot]
-                                  );
-                              });
-                          });
-                      }
-                  );
+                db.run(
+                    'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+                    [planId, weekIndex + 1],
+                    function(err) {
+                        if (err) {
+                            weekInsertError = true;
+                            return;
+                        }
+            
+                        const weekId = this.lastID;
+                        
+                        // Add null checks for week.days
+                        if (week && week.days && Array.isArray(week.days)) {
+                            week.days.forEach((day) => {
+                                // Add null check for day.blocks
+                                if (day && day.blocks && Array.isArray(day.blocks)) {
+                                    day.blocks.forEach((block) => {
+                                        db.run(
+                                            'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
+                                            [weekId, day.dayOfWeek, block.blockId, block.timeSlot]
+                                        );
+                                    });
+                                }
+                            });
+                        }
+                    }
+                );
               });
 
               if (weekInsertError) {

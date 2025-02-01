@@ -13,10 +13,21 @@
     </script>
     <div class="plan-detail-container">
         <div class="plan-detail-header">
+            <button id="backBtn" class="secondary-button">← Back</button>
             <h1 id="planTitle">Loading...</h1>
+            <button id="saveBtn" class="primary-button">Save Changes</button>
         </div>
-        <div id="planContent">
+        <div id="planContent" class="plan-content">
             <!-- Plan content will be dynamically inserted here -->
+        </div>
+        <div class="blocks-section">
+            <div class="blocks-header">
+                <h2>Training Blocks</h2>
+                <button id="newBlockBtn" class="secondary-button">New Block</button>
+            </div>
+            <div id="blocksList" class="blocks-list">
+                <!-- Training blocks will be listed here -->
+            </div>
         </div>
     </div>
     <script src="js/plan-detail.js"></script>

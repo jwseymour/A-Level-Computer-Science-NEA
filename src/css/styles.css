@@ -242,3 +242,144 @@ button:hover {
     font-weight: 500;
     font-size: 0.9rem;
 }
+
+/* Add these to your existing styles.css */
+.plan-detail-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.plan-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.plan-detail-header h1 {
+    flex-grow: 1;
+    margin: 0;
+}
+
+.plan-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+}
+
+.blocks-sidebar {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blocks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.blocks-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.blocks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.block-item {
+    background: #f5f5f5;
+    padding: 0.75rem;
+    border-radius: 4px;
+    cursor: move;
+}
+.block-time {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.block-item:hover {
+    background: #eeeeee;
+}
+
+.day-column {
+    position: relative;
+}
+
+.drop-zone {
+    min-height: 150px;
+    border: 2px dashed #ddd;
+    margin: 4px 0;
+    border-radius: 4px;
+    padding: 8px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.block-card {
+    background: #f5f5f5;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 2px 0;
+    cursor: move;
+}
+
+.block-card:hover {
+    background: #eeeeee;
+}
+
+.drop-zone.dragover {
+    background: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+}
+
+.time-slot-label {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.secondary-button {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ddd;
+    padding: 0.625rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.secondary-button:hover {
+    background-color: #e0e0e0;
+}
+
+.plan-detail-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.blocks-section {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blocks-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}

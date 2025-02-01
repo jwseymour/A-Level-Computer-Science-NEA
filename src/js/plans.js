@@ -40,7 +40,7 @@ async function createNewPlan(title) {
             },
             body: JSON.stringify({
                 title,
-                weeks: [] // Start with empty weeks
+                weeks: [{ days: [] }] // Initialize with one week
             })
         });
 
