@@ -50,6 +50,8 @@ db.run(`
     user_id INTEGER,
     title TEXT NOT NULL,
     description TEXT,
+    tags TEXT,
+    is_favorited BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )
@@ -61,6 +63,8 @@ db.run(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
     title TEXT NOT NULL,
+    tags TEXT,
+    is_favorited BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )
@@ -132,300 +136,440 @@ app.post('/api/login', async (req, res) => {
   });
 });
 
-// Add this after your other endpoints
+// create block
+app.post('/api/blocks', authenticateUser, (req, res) => {
+  const { title, description, tags } = req.body;
+  const userId = req.user.id;
+
+  db.run(
+    'INSERT INTO training_blocks (user_id, title, description, tags) VALUES (?, ?, ?, ?)',
+    [userId, title, description, tags],
+    function(err) {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      res.json({
+        id: this.lastID,
+        user_id: userId,
+        title,
+        description,
+        tags,
+        is_favorited: 0
+      });
+    }
+  );
+});
+
+// Get all blocks for the authenticated user
 app.get('/api/blocks', authenticateUser, (req, res) => {
   const userId = req.user.id;
   
   db.all(
-      'SELECT * FROM training_blocks WHERE user_id = ? ORDER BY created_at DESC',
-      [userId],
-      (err, blocks) => {
-          if (err) {
-              res.status(400).json({ error: err.message });
-              return;
-          }
-          res.json(blocks);
+    'SELECT * FROM training_blocks WHERE user_id = ? ORDER BY created_at DESC',
+    [userId],
+    (err, blocks) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
       }
+      res.json(blocks);
+    }
   );
 });
 
-app.post('/api/blocks', authenticateUser, (req, res) => {
-  const { title, description } = req.body;
+// Edit a block
+app.put('/api/blocks/:id', authenticateUser, (req, res) => {
+  const blockId = req.params.id;
   const userId = req.user.id;
+  const { title, description, tags, is_favorited } = req.body;
 
-  db.run(
-      'INSERT INTO training_blocks (user_id, title, description) VALUES (?, ?, ?)',
-      [userId, title, description],
-      function(err) {
+  // First verify the block belongs to the user
+  db.get(
+    'SELECT * FROM training_blocks WHERE id = ? AND user_id = ?',
+    [blockId, userId],
+    (err, block) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      if (!block) {
+        res.status(404).json({ error: 'Block not found or unauthorized' });
+        return;
+      }
+
+      // Update the block
+      db.run(
+        `UPDATE training_blocks 
+         SET title = ?, description = ?, tags = ?, is_favorited = ?
+         WHERE id = ? AND user_id = ?`,
+        [title, description, tags, is_favorited, blockId, userId],
+        function(err) {
           if (err) {
-              res.status(400).json({ error: err.message });
-              return;
+            res.status(400).json({ error: err.message });
+            return;
           }
           res.json({
-              id: this.lastID,
-              user_id: userId,
-              title,
-              description
+            id: blockId,
+            user_id: userId,
+            title,
+            description,
+            tags,
+            is_favorited
           });
-      }
-  );
-});
-
-app.put('/api/blocks/:id', async (req, res) => {
-  const { title, description } = req.body;
-  const blockId = req.params.id;
-  const userId = req.user.id;
-
-  db.run(
-    'UPDATE training_blocks SET title = ?, description = ? WHERE id = ? AND user_id = ?',
-    [title, description, blockId, userId],
-    function(err) {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
-      }
-      if (this.changes === 0) {
-        res.status(404).json({ error: 'Block not found or unauthorized' });
-        return;
-      }
-      res.json({ success: true });
+        }
+      );
     }
   );
 });
 
-app.delete('/api/blocks/:id', async (req, res) => {
+// Delete a block
+app.delete('/api/blocks/:id', authenticateUser, (req, res) => {
   const blockId = req.params.id;
   const userId = req.user.id;
 
-  db.run(
-    'DELETE FROM training_blocks WHERE id = ? AND user_id = ?',
+  // First verify the block belongs to the user
+  db.get(
+    'SELECT * FROM training_blocks WHERE id = ? AND user_id = ?',
     [blockId, userId],
+    (err, block) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      if (!block) {
+        res.status(404).json({ error: 'Block not found or unauthorized' });
+        return;
+      }
+
+      // Delete the block
+      db.run(
+        'DELETE FROM training_blocks WHERE id = ? AND user_id = ?',
+        [blockId, userId],
+        function(err) {
+          if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+          }
+          
+          // Also delete any references in daily_blocks
+          db.run(
+            'DELETE FROM daily_blocks WHERE block_id = ?',
+            [blockId],
+            function(err) {
+              if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+              }
+              res.json({ success: true });
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
+// Create new training plan
+app.post('/api/plans', authenticateUser, (req, res) => {
+  const { title, tags } = req.body;
+  const userId = req.user.id;
+
+  db.run(
+    'INSERT INTO training_plans (user_id, title, tags) VALUES (?, ?, ?)',
+    [userId, title, tags],
     function(err) {
       if (err) {
         res.status(400).json({ error: err.message });
         return;
       }
-      if (this.changes === 0) {
-        res.status(404).json({ error: 'Block not found or unauthorized' });
-        return;
-      }
-      res.json({ success: true });
+
+      const planId = this.lastID;
+      
+      // Create initial week
+      db.run(
+        'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+        [planId, 1],
+        function(err) {
+          if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+          }
+          res.json({
+            id: planId,
+            user_id: userId,
+            title,
+            tags,
+            is_favorited: 0
+          });
+        }
+      );
     }
   );
 });
 
-// Get all plans for a user
-app.get('/api/plans', async (req, res) => {
-  const userId = req.user?.id;
-
-  db.all(
-      'SELECT * FROM training_plans WHERE user_id = ? ORDER BY created_at DESC',
-      [userId],
-      (err, plans) => {
-          if (err) {
-              res.status(400).json({ error: err.message });
-              return;
-          }
-          res.json(plans);
-      }
-  );
-});
-
-// Training Plans endpoints
-app.post('/api/plans', async (req, res) => {
-  const { title, weeks } = req.body;
+// Get all training plans (basic info)
+app.get('/api/plans', authenticateUser, (req, res) => {
   const userId = req.user.id;
   
-  db.serialize(() => {
-      db.run('BEGIN TRANSACTION');
-
-      db.run(
-          'INSERT INTO training_plans (user_id, title) VALUES (?, ?)',
-          [userId, title],
-          function(err) {
-              if (err) {
-                  db.run('ROLLBACK');
-                  res.status(400).json({ error: err.message });
-                  return;
-              }
-
-              const planId = this.lastID;
-              let weekInsertError = false;
-
-              weeks.forEach((week, weekIndex) => {
-                db.run(
-                    'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                    [planId, weekIndex + 1],
-                    function(err) {
-                        if (err) {
-                            weekInsertError = true;
-                            return;
-                        }
-            
-                        const weekId = this.lastID;
-                        
-                        // Add null checks for week.days
-                        if (week && week.days && Array.isArray(week.days)) {
-                            week.days.forEach((day) => {
-                                // Add null check for day.blocks
-                                if (day && day.blocks && Array.isArray(day.blocks)) {
-                                    day.blocks.forEach((block) => {
-                                        db.run(
-                                            'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                                            [weekId, day.dayOfWeek, block.blockId, block.timeSlot]
-                                        );
-                                    });
-                                }
-                            });
-                        }
-                    }
-                );
-            });
-
-              if (weekInsertError) {
-                  db.run('ROLLBACK');
-                  res.status(400).json({ error: 'Error creating plan' });
-                  return;
-              }
-
-              db.run('COMMIT');
-              res.json({ id: planId });
-          }
-      );
-  });
+  db.all(
+    'SELECT id, title, tags, is_favorited, created_at FROM training_plans WHERE user_id = ? ORDER BY created_at DESC',
+    [userId],
+    (err, plans) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      res.json(plans);
+    }
+  );
 });
 
-app.put('/api/plans/:id', async (req, res) => {
-  const { title, weeks } = req.body;
+// Get detailed plan data
+app.get('/api/plans/:id', authenticateUser, (req, res) => {
   const planId = req.params.id;
   const userId = req.user.id;
 
-  db.serialize(() => {
-      db.run('BEGIN TRANSACTION');
+  // First verify the plan belongs to the user
+  db.get(
+    'SELECT * FROM training_plans WHERE id = ? AND user_id = ?',
+    [planId, userId],
+    (err, plan) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      if (!plan) {
+        res.status(404).json({ error: 'Plan not found or unauthorized' });
+        return;
+      }
 
-      db.run(
-          'UPDATE training_plans SET title = ? WHERE id = ? AND user_id = ?',
-          [title, planId, userId],
-          function(err) {
-              if (err || this.changes === 0) {
-                  db.run('ROLLBACK');
-                  res.status(404).json({ error: 'Plan not found or unauthorized' });
-                  return;
+      // Get all weeks for this plan
+      db.all(
+        'SELECT * FROM plan_weeks WHERE plan_id = ? ORDER BY week_number',
+        [planId],
+        (err, weeks) => {
+          if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+          }
+
+          // Get all daily blocks for all weeks
+          const weekIds = weeks.map(w => w.id).join(',');
+          db.all(
+            `SELECT db.*, tb.title, tb.description, tb.tags 
+             FROM daily_blocks db 
+             JOIN training_blocks tb ON db.block_id = tb.id 
+             WHERE db.week_id IN (${weekIds})
+             ORDER BY db.week_id, db.day_of_week`,
+            [],
+            (err, dailyBlocks) => {
+              if (err) {
+                res.status(400).json({ error: err.message });
+                return;
               }
 
-              // Delete existing weeks and blocks
-              db.run('DELETE FROM plan_weeks WHERE plan_id = ?', [planId]);
+              // Format the response
+              const formattedWeeks = weeks.map(week => {
+                const weekBlocks = dailyBlocks.filter(db => db.week_id === week.id);
+                const days = {};
+                
+                // Group blocks by day
+                weekBlocks.forEach(block => {
+                  if (!days[block.day_of_week]) {
+                    days[block.day_of_week] = [];
+                  }
+                  days[block.day_of_week].push({
+                    id: block.block_id,
+                    daily_block_id: block.id,  // ID from daily_blocks table
+                    title: block.title,
+                    description: block.description,
+                    tags: block.tags,
+                    time_slot: block.time_slot
+                  });
+                });
 
-              // Insert new weeks and blocks
-              let weekInsertError = false;
-
-              weeks.forEach((week, weekIndex) => {
-                db.run(
-                    'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                    [planId, weekIndex + 1],
-                    function(err) {
-                        if (err) {
-                            weekInsertError = true;
-                            return;
-                        }
-            
-                        const weekId = this.lastID;
-                        
-                        // Add null checks for week.days
-                        if (week && week.days && Array.isArray(week.days)) {
-                            week.days.forEach((day) => {
-                                // Add null check for day.blocks
-                                if (day && day.blocks && Array.isArray(day.blocks)) {
-                                    day.blocks.forEach((block) => {
-                                        db.run(
-                                            'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                                            [weekId, day.dayOfWeek, block.blockId, block.timeSlot]
-                                        );
-                                    });
-                                }
-                            });
-                        }
-                    }
-                );
+                return {
+                  id: week.id,  // week ID from plan_weeks table
+                  week_number: week.week_number,
+                  days
+                };
               });
 
-              if (weekInsertError) {
-                  db.run('ROLLBACK');
-                  res.status(400).json({ error: 'Error updating plan' });
-                  return;
+              res.json({
+                id: plan.id,
+                user_id: plan.user_id,
+                title: plan.title,
+                tags: plan.tags,
+                is_favorited: plan.is_favorited,
+                created_at: plan.created_at,
+                weeks: formattedWeeks
+              });
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
+// Edit training plan
+app.put('/api/plans/:id', authenticateUser, async (req, res) => {
+  const planId = req.params.id;
+  const userId = req.user.id;
+  const { title, tags, is_favorited, weeks } = req.body;
+
+  // Start a transaction
+  db.serialize(() => {
+    db.run('BEGIN TRANSACTION');
+
+    // First verify and update the plan
+    db.get(
+      'SELECT * FROM training_plans WHERE id = ? AND user_id = ?',
+      [planId, userId],
+      (err, plan) => {
+        if (err) {
+          db.run('ROLLBACK');
+          res.status(400).json({ error: err.message });
+          return;
+        }
+        if (!plan) {
+          db.run('ROLLBACK');
+          res.status(404).json({ error: 'Plan not found or unauthorized' });
+          return;
+        }
+
+        // Update plan details
+        db.run(
+          'UPDATE training_plans SET title = ?, tags = ?, is_favorited = ? WHERE id = ?',
+          [title, tags, is_favorited, planId],
+          async function(err) {
+            if (err) {
+              db.run('ROLLBACK');
+              res.status(400).json({ error: err.message });
+              return;
+            }
+
+            try {
+              // Get existing weeks
+              const existingWeeks = await new Promise((resolve, reject) => {
+                db.all('SELECT * FROM plan_weeks WHERE plan_id = ?', [planId], (err, weeks) => {
+                  if (err) reject(err);
+                  else resolve(weeks || []);
+                });
+              });
+
+              // Update or create weeks
+              for (const week of weeks) {
+                if (week.id) {
+                  // Update existing week
+                  await new Promise((resolve, reject) => {
+                    db.run(
+                      'UPDATE plan_weeks SET week_number = ? WHERE id = ? AND plan_id = ?',
+                      [week.week_number, week.id, planId],
+                      err => err ? reject(err) : resolve()
+                    );
+                  });
+                } else {
+                  // Create new week
+                  await new Promise((resolve, reject) => {
+                    db.run(
+                      'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+                      [planId, week.week_number],
+                      function(err) {
+                        if (err) reject(err);
+                        else {
+                          week.id = this.lastID;
+                          resolve();
+                        }
+                      }
+                    );
+                  });
+                }
+
+                // Handle daily blocks for this week
+                for (const [dayNum, blocks] of Object.entries(week.days)) {
+                  for (const block of blocks) {
+                    if (block.daily_block_id) {
+                      // Update existing daily block
+                      await new Promise((resolve, reject) => {
+                        db.run(
+                          'UPDATE daily_blocks SET time_slot = ? WHERE id = ?',
+                          [block.time_slot, block.daily_block_id],
+                          err => err ? reject(err) : resolve()
+                        );
+                      });
+                    } else {
+                      // Create new daily block
+                      await new Promise((resolve, reject) => {
+                        db.run(
+                          'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
+                          [week.id, dayNum, block.id, block.time_slot],
+                          err => err ? reject(err) : resolve()
+                        );
+                      });
+                    }
+                  }
+                }
+              }
+
+              // Remove weeks that are no longer in the plan
+              const keepWeekIds = weeks.map(w => w.id).filter(id => id);
+              if (keepWeekIds.length > 0) {
+                await new Promise((resolve, reject) => {
+                  db.run(
+                    `DELETE FROM plan_weeks WHERE plan_id = ? AND id NOT IN (${keepWeekIds.join(',')})`,
+                    [planId],
+                    err => err ? reject(err) : resolve()
+                  );
+                });
               }
 
               db.run('COMMIT');
               res.json({ success: true });
+
+            } catch (error) {
+              db.run('ROLLBACK');
+              res.status(400).json({ error: error.message });
+            }
           }
-      );
+        );
+      }
+    );
   });
 });
 
-app.get('/api/plans/:id', async (req, res) => {
-  const planId = req.params.id;
-  const userId = req.user?.id;
-
-  db.get(
-      `SELECT p.*, 
-       GROUP_CONCAT(DISTINCT json_object(
-           'id', pw.id,
-           'weekNumber', pw.week_number,
-           'days', (
-               SELECT json_group_array(json_object(
-                   'dayOfWeek', db.day_of_week,
-                   'blockId', db.block_id,
-                   'timeSlot', db.time_slot
-               ))
-               FROM daily_blocks db
-               WHERE db.week_id = pw.id
-               GROUP BY db.day_of_week
-           )
-       )) as weeks
-       FROM training_plans p
-       LEFT JOIN plan_weeks pw ON p.id = pw.plan_id
-       WHERE p.id = ? AND p.user_id = ?
-       GROUP BY p.id`,
-      [planId, userId],
-      (err, plan) => {
-          if (err) {
-              res.status(400).json({ error: err.message });
-              return;
-          }
-          if (!plan) {
-              res.status(404).json({ error: 'Plan not found' });
-              return;
-          }
-          
-          // Parse the weeks string into a proper JSON structure
-          if (plan.weeks) {
-              plan.weeks = JSON.parse(`[${plan.weeks}]`);
-          } else {
-              plan.weeks = [];
-          }
-          
-          res.json(plan);
-      }
-  );
-});
-
-app.delete('/api/plans/:id', async (req, res) => {
+// Delete training plan
+app.delete('/api/plans/:id', authenticateUser, (req, res) => {
   const planId = req.params.id;
   const userId = req.user.id;
 
-  db.run(
-    'DELETE FROM training_plans WHERE id = ? AND user_id = ?',
+  // First verify the plan belongs to the user
+  db.get(
+    'SELECT * FROM training_plans WHERE id = ? AND user_id = ?',
     [planId, userId],
-    function(err) {
+    (err, plan) => {
       if (err) {
         res.status(400).json({ error: err.message });
         return;
       }
-      if (this.changes === 0) {
+      if (!plan) {
         res.status(404).json({ error: 'Plan not found or unauthorized' });
         return;
       }
-      res.json({ success: true });
+
+      // Delete the plan (cascades to weeks and daily_blocks)
+      db.run(
+        'DELETE FROM training_plans WHERE id = ? AND user_id = ?',
+        [planId, userId],
+        function(err) {
+          if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+          }
+          res.json({ success: true });
+        }
+      );
     }
   );
 });
