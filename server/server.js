@@ -574,6 +574,46 @@ app.delete('/api/plans/:id', authenticateUser, (req, res) => {
   );
 });
 
+// Toggle plan favorite status
+app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
+  const planId = req.params.id;
+  const userId = req.user.id;
+
+  // First verify the plan belongs to the user and get current favorite status
+  db.get(
+    'SELECT is_favorited FROM training_plans WHERE id = ? AND user_id = ?',
+    [planId, userId],
+    (err, plan) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      if (!plan) {
+        res.status(404).json({ error: 'Plan not found or unauthorized' });
+        return;
+      }
+
+      // Toggle the favorite status
+      const newFavoriteStatus = plan.is_favorited ? 0 : 1;
+      
+      db.run(
+        'UPDATE training_plans SET is_favorited = ? WHERE id = ? AND user_id = ?',
+        [newFavoriteStatus, planId, userId],
+        function(err) {
+          if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+          }
+          res.json({ 
+            success: true, 
+            is_favorited: newFavoriteStatus 
+          });
+        }
+      );
+    }
+  );
+});
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

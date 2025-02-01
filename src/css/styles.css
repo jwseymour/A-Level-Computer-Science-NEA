@@ -383,3 +383,98 @@ button:hover {
     gap: 1rem;
     margin-top: 1rem;
 }
+
+.plan-card {
+    position: relative;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+}
+
+.plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+.plan-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.2rem;
+    line-height: 1;
+}
+
+.favorite-btn {
+    color: #ccc;
+}
+
+.favorite-btn.active {
+    color: gold;
+}
+
+.delete-btn {
+    color: #ff4444;
+}
+
+.plan-tags {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+
+.view-btn {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.block-item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 4px;
+    background: white;
+}
+
+.block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.block-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 5px;
+    font-size: 1.1em;
+}
+
+.block-description {
+    font-size: 0.9em;
+    color: #666;
+    margin: 5px 0;
+}
+
+.block-tags {
+    font-size: 0.8em;
+    color: #007bff;
+}
+
+.block-item.dragging {
+    opacity: 0.5;
+}

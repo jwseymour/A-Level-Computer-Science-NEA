@@ -7,7 +7,33 @@ if (!user) {
 const plansGrid = document.getElementById('plansGrid');
 const newPlanBtn = document.getElementById('newPlanBtn');
 
-// Fetch and display plans
+// Update the renderPlans function (replaces the existing plansGrid.innerHTML assignment)
+function renderPlans(plans) {
+    plansGrid.innerHTML = plans.map(plan => `
+        <div class="plan-card">
+            <div class="plan-header">
+                <h3>${plan.title}</h3>
+                <div class="plan-actions">
+                    <button class="icon-button favorite-btn ${plan.is_favorited ? 'active' : ''}" 
+                            onclick="toggleFavorite(${plan.id}, event)">
+                        ★
+                    </button>
+                    <button class="icon-button delete-btn" 
+                            onclick="deletePlan(${plan.id}, event)">
+                        ×
+                    </button>
+                </div>
+            </div>
+            <p class="plan-date">${new Date(plan.created_at).toLocaleDateString()}</p>
+            ${plan.tags ? `<p class="plan-tags">${plan.tags}</p>` : ''}
+            <button class="view-btn" onclick="window.location.href='/plan-detail.html?id=${plan.id}'">
+                View Plan
+            </button>
+        </div>
+    `).join('');
+}
+
+// Update loadPlans to use the new render function
 async function loadPlans() {
     try {
         const response = await fetch('/api/plans', {
@@ -17,20 +43,60 @@ async function loadPlans() {
             }
         });
         const plans = await response.json();
-        
-        plansGrid.innerHTML = plans.map(plan => `
-            <div class="plan-card" onclick="window.location.href='/plan-detail.html?id=${plan.id}'">
-                <h3>${plan.title}</h3>
-                <p class="plan-date">${new Date(plan.created_at).toLocaleDateString()}</p>
-            </div>
-        `).join('');
+        renderPlans(plans);
     } catch (error) {
         console.error('Error loading plans:', error);
     }
 }
 
-// Create new plan
-async function createNewPlan(title) {
+// Add delete functionality
+async function deletePlan(planId, event) {
+    event.stopPropagation();
+    if (!confirm('Are you sure you want to delete this plan?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/plans/${planId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete plan');
+        }
+
+        loadPlans(); // Refresh the plans list
+    } catch (error) {
+        console.error('Error deleting plan:', error);
+    }
+}
+
+// Add favorite functionality
+async function toggleFavorite(planId, event) {
+    event.stopPropagation();
+    try {
+        const response = await fetch(`/api/plans/${planId}/favorite`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to toggle favorite');
+        }
+
+        loadPlans(); // Refresh the plans list
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+    }
+}
+
+// Update createNewPlan to include tags
+async function createNewPlan(title, tags = '') {
     try {
         const response = await fetch('/api/plans', {
             method: 'POST',
@@ -40,7 +106,8 @@ async function createNewPlan(title) {
             },
             body: JSON.stringify({
                 title,
-                weeks: [{ days: [] }] // Initialize with one week
+                tags,
+                weeks: [{ days: [] }]
             })
         });
 
