@@ -27,9 +27,10 @@ authForm.addEventListener('submit', async (e) => {
         const data = await response.json();
         
         if (!response.ok) throw new Error(data.error);
-        
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(data));
+
+        // Store token and user data in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         window.location.href = '/dashboard.html';
     } catch (error) {
         errorMessage.textContent = error.message;

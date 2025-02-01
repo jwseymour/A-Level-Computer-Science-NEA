@@ -10,6 +10,7 @@ async function loadNavbar() {
         const user = JSON.parse(localStorage.getItem('user'));
         const authLink = document.querySelector('.nav-auth');
         const dashboardLink = document.querySelector('.nav-dashboard');
+        const plansLink = document.querySelector('.nav-plans'); // Add this line
         
         if (user) {
             authLink.textContent = 'Logout';
@@ -20,10 +21,12 @@ async function loadNavbar() {
                 window.location.href = '/auth.html';
             });
             dashboardLink.style.display = 'inline';
+            plansLink.style.display = 'inline'; // Show plans link when logged in
         } else {
             authLink.textContent = 'Login';
             authLink.href = '/auth.html';
             dashboardLink.style.display = 'none';
+            plansLink.style.display = 'none'; // Hide plans link when logged out
         }
     } catch (error) {
         console.error('Error loading navbar:', error);
