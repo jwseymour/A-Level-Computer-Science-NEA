@@ -133,28 +133,83 @@ function handleDrop(e) {
     e.preventDefault();
     e.currentTarget.classList.remove('dragover');
     
-    const blockId = e.dataTransfer.getData('text/plain');
+    const blockId = parseInt(e.dataTransfer.getData('text/plain'));
     const dayElement = e.currentTarget;
     const weekElement = dayElement.closest('.week-container');
     
-    const weekId = weekElement.dataset.weekId;
-    const dayNumber = dayElement.dataset.day;
+    const weekId = parseInt(weekElement.dataset.weekId);
+    const dayNumber = parseInt(dayElement.dataset.day);
     
+    // Find the block details from our blocks array
+    const block = blocks.find(b => b.id === blockId);
+    if (!block) return;
+
     // Update editablePlan structure
-    const week = editablePlan.weeks.find(w => w.id === parseInt(weekId));
+    const week = editablePlan.weeks.find(w => w.id === weekId);
+    if (!week) return;
+
     if (!week.days[dayNumber]) {
         week.days[dayNumber] = [];
     }
     
+    const timeSlot = prompt('Enter time slot (e.g., 09:00):', '09:00');
+    if (!timeSlot) return;
+
     // Add new block to the day
     week.days[dayNumber].push({
-        id: parseInt(blockId),
-        daily_block_id: null,  // Will be assigned by server on save
-        time_slot: prompt('Enter time slot (e.g., 09:00):', '09:00')
+        id: blockId,
+        daily_block_id: null,
+        time_slot: timeSlot
     });
+
+    // Update currentPlan to match editablePlan for this change
+    const currentWeek = currentPlan.weeks.find(w => w.id === weekId);
+    if (!currentWeek.days[dayNumber]) {
+        currentWeek.days[dayNumber] = [];
+    }
     
+    currentWeek.days[dayNumber].push({
+        id: blockId,
+        daily_block_id: null,
+        time_slot: timeSlot,
+        title: block.title,
+        description: block.description,
+        tags: block.tags
+    });
+
     // Update UI
-    loadPlan();  // Refresh the entire plan view
+    renderPlan();
+}
+
+function removeBlock(event) {
+    event.preventDefault();
+    const blockElement = event.target.closest('.assigned-block');
+    const weekElement = blockElement.closest('.week-container');
+    const dayElement = blockElement.closest('.day-container');
+    
+    const weekId = parseInt(weekElement.dataset.weekId);
+    const dayNumber = parseInt(dayElement.querySelector('.drop-zone').dataset.day);
+    const dailyBlockId = parseInt(blockElement.dataset.dailyBlockId);
+    const blockId = parseInt(blockElement.dataset.blockId);
+
+    // Update editablePlan
+    const week = editablePlan.weeks.find(w => w.id === weekId);
+    if (week && week.days[dayNumber]) {
+        week.days[dayNumber] = week.days[dayNumber].filter(block => 
+            block.id !== blockId || block.daily_block_id !== dailyBlockId
+        );
+    }
+
+    // Update currentPlan
+    const currentWeek = currentPlan.weeks.find(w => w.id === weekId);
+    if (currentWeek && currentWeek.days[dayNumber]) {
+        currentWeek.days[dayNumber] = currentWeek.days[dayNumber].filter(block => 
+            block.id !== blockId || block.daily_block_id !== dailyBlockId
+        );
+    }
+
+    // Update UI
+    renderPlan();
 }
 
 // Load plan data
