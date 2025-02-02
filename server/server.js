@@ -111,7 +111,15 @@ app.post('/api/register', async (req, res) => {
         res.status(400).json({ error: err.message });
         return;
       }
-      res.json({ id: this.lastID });
+      // Create token and return same structure as login
+      const token = jwt.sign({ id: this.lastID, email: email }, SECRET_KEY);
+      res.json({ 
+        token, 
+        user: { 
+          id: this.lastID, 
+          email: email 
+        } 
+      });
     });
 });
 

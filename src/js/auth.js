@@ -1,5 +1,6 @@
 const authForm = document.getElementById('authForm');
 const signUpBtn = document.getElementById('signUpBtn');
+const submitBtn = document.getElementById('submitBtn'); // Add this line
 const errorMessage = document.getElementById('errorMessage');
 
 let isLogin = true;
@@ -8,6 +9,7 @@ signUpBtn.addEventListener('click', () => {
     isLogin = !isLogin;
     signUpBtn.textContent = isLogin ? 'Sign Up Instead' : 'Login Instead';
     authForm.querySelector('h2').textContent = isLogin ? 'Login' : 'Sign Up';
+    submitBtn.textContent = isLogin ? 'Login' : 'Sign Up'; // Update submit button text
 });
 
 authForm.addEventListener('submit', async (e) => {
