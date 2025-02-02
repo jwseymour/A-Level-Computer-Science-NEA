@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Details</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="/js/components/navbar.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <script>
+        loadNavbar();
+    </script>
+    <div class="resource-detail-container">
+        <div class="resource-detail-header">
+            <button id="backBtn" class="secondary-button">← Back</button>
+            <h1 id="resourceTitle">Loading...</h1>
+        </div>
+        <div class="resource-content">
+            <div id="resourceDescription" class="resource-description"></div>
+            <div id="resourceTags" class="resource-tags"></div>
+            <div id="resourceContent" class="resource-content-mdx"></div>
+        </div>
+        <div class="resource-sections">
+            <div class="training-plans-section">
+                <h2>Training Plans</h2>
+                <div id="resourcePlans" class="plans-grid"></div>
+            </div>
+            <div class="training-blocks-section">
+                <h2>Training Blocks</h2>
+                <div id="resourceBlocks" class="blocks-list"></div>
+            </div>
+        </div>
+    </div>
+    <script src="js/resource-detail.js"></script>
+</body>
+</html>

@@ -4,7 +4,9 @@
     "description": "A Level Computer Science NEA",
     "type": "module",
     "scripts": {
-        "start": "node server/server.js"
+        "start": "node server/server.js",
+        "create-resource": "node scripts/create-resource.js",
+        "remove-resource": "node scripts/remove-resource.js"
     },
     "keywords": [],
     "author": "Your Name",
@@ -13,6 +15,7 @@
         "bcryptjs": "^2.4.3",
         "express": "^4.18.2",
         "jsonwebtoken": "^9.0.2",
+        "marked": "^15.0.6",
         "sqlite3": "^5.1.7"
     }
 }

@@ -93,6 +93,40 @@ db.run(`
   )
 `);
 
+// Resources table
+db.run(`
+  CREATE TABLE IF NOT EXISTS resources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    content TEXT,
+    tags TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+// Resource blocks table (to store which blocks belong to which resources)
+db.run(`
+  CREATE TABLE IF NOT EXISTS resource_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    resource_id INTEGER,
+    block_id INTEGER,
+    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    FOREIGN KEY (block_id) REFERENCES training_blocks(id) ON DELETE CASCADE
+  )
+`);
+
+// Resource plans table (to store which plans belong to which resources)
+db.run(`
+  CREATE TABLE IF NOT EXISTS resource_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    resource_id INTEGER,
+    plan_id INTEGER,
+    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    FOREIGN KEY (plan_id) REFERENCES training_plans(id) ON DELETE CASCADE
+  )
+`);
+
 app.use(express.json());
 app.use(express.static(join(__dirname, '../src')));
 app.use('/components', express.static(join(__dirname, '../src/components')));
@@ -638,6 +672,171 @@ app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
             success: true, 
             is_favorited: newFavoriteStatus 
           });
+        }
+      );
+    }
+  );
+});
+
+// Get all resources (basic info only)
+app.get('/api/resources', (req, res) => {
+  db.all(
+    'SELECT id, title, description, tags, created_at FROM resources ORDER BY created_at DESC',
+    [],
+    (err, resources) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      res.json(resources);
+    }
+  );
+});
+
+// Get detailed resource information
+app.get('/api/resources/:id', (req, res) => {
+  const resourceId = req.params.id;
+  const token = req.headers.authorization?.split(' ')[1];
+  let userId = null;
+
+  // If token exists, verify it to get user ID
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, SECRET_KEY);
+      userId = decoded.id;
+    } catch (err) {
+      // Invalid token, but we'll continue without user context
+      console.warn('Invalid token provided');
+    }
+  }
+
+  // Get resource basic info
+  db.get(
+    'SELECT * FROM resources WHERE id = ?',
+    [resourceId],
+    (err, resource) => {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+      if (!resource) {
+        res.status(404).json({ error: 'Resource not found' });
+        return;
+      }
+
+      // Get associated blocks
+      db.all(
+        `SELECT tb.* 
+         FROM training_blocks tb
+         JOIN resource_blocks rb ON tb.id = rb.block_id
+         WHERE rb.resource_id = ?`,
+        [resourceId],
+        (err, blocks) => {
+          if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+          }
+
+          // Get associated plans with their weeks and daily blocks
+          db.all(
+            `SELECT tp.* 
+             FROM training_plans tp
+             JOIN resource_plans rp ON tp.id = rp.plan_id
+             WHERE rp.resource_id = ?`,
+            [resourceId],
+            async (err, plans) => {
+              if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+              }
+
+              // For each plan, get its weeks and daily blocks
+              const detailedPlans = await Promise.all(plans.map(async plan => {
+                // Get weeks for this plan
+                const weeks = await new Promise((resolve, reject) => {
+                  db.all(
+                    'SELECT * FROM plan_weeks WHERE plan_id = ? ORDER BY week_number',
+                    [plan.id],
+                    (err, weeks) => err ? reject(err) : resolve(weeks)
+                  );
+                });
+
+                // Get daily blocks for all weeks
+                const weekIds = weeks.map(w => w.id).join(',');
+                if (weekIds) {
+                  const dailyBlocks = await new Promise((resolve, reject) => {
+                    db.all(
+                      `SELECT db.*, tb.title, tb.description, tb.tags 
+                       FROM daily_blocks db 
+                       JOIN training_blocks tb ON db.block_id = tb.id 
+                       WHERE db.week_id IN (${weekIds})
+                       ORDER BY db.week_id, db.day_of_week`,
+                      [],
+                      (err, blocks) => err ? reject(err) : resolve(blocks)
+                    );
+                  });
+
+                  // Format weeks with their daily blocks
+                  const formattedWeeks = weeks.map(week => {
+                    const weekBlocks = dailyBlocks.filter(db => db.week_id === week.id);
+                    const days = {};
+                    weekBlocks.forEach(block => {
+                      if (!days[block.day_of_week]) days[block.day_of_week] = [];
+                      days[block.day_of_week].push({
+                        id: block.block_id,
+                        daily_block_id: block.id,
+                        title: block.title,
+                        description: block.description,
+                        tags: block.tags,
+                        time_slot: block.time_slot
+                      });
+                    });
+                    return { id: week.id, week_number: week.week_number, days };
+                  });
+
+                  return { ...plan, weeks: formattedWeeks };
+                }
+                return { ...plan, weeks: [] };
+              }));
+
+              // If user is logged in, add copyable versions
+              const response = {
+                ...resource,
+                blocks,
+                plans: detailedPlans
+              };
+
+              if (userId) {
+                response.copyableBlocks = blocks.map(block => ({
+                  ...block,
+                  id: undefined,
+                  user_id: undefined,
+                  created_at: undefined
+                }));
+
+                response.copyablePlans = detailedPlans.map(plan => ({
+                  ...plan,
+                  id: undefined,
+                  user_id: undefined,
+                  created_at: undefined,
+                  weeks: plan.weeks.map(week => ({
+                    ...week,
+                    id: undefined,
+                    days: Object.entries(week.days).reduce((acc, [day, blocks]) => {
+                      acc[day] = blocks.map(block => ({
+                        ...block,
+                        id: undefined,
+                        daily_block_id: undefined
+                      }));
+                      return acc;
+                    }, {})
+                  }))
+                }));
+              }
+
+              res.json(response);
+            }
+          );
         }
       );
     }
