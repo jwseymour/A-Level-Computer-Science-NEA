@@ -82,7 +82,22 @@ async function editBlock(blockId, event) {
 
         const updatedBlock = await response.json();
         blocks = blocks.map(b => b.id === blockId ? updatedBlock : b);
+        
+        // Update block details in currentPlan
+        currentPlan.weeks.forEach(week => {
+            Object.values(week.days).forEach(dayBlocks => {
+                dayBlocks.forEach(block => {
+                    if (block.id === blockId) {
+                        block.title = updatedBlock.title;
+                        block.description = updatedBlock.description;
+                        block.tags = updatedBlock.tags;
+                    }
+                });
+            });
+        });
+
         renderBlocks();
+        renderPlan();
     } catch (error) {
         console.error('Error updating block:', error);
     }
@@ -104,10 +119,60 @@ async function deleteBlock(blockId, event) {
         if (!response.ok) throw new Error('Failed to delete block');
 
         blocks = blocks.filter(b => b.id !== blockId);
+
+        // Remove the block from currentPlan and editablePlan
+        currentPlan.weeks.forEach(week => {
+            Object.keys(week.days).forEach(day => {
+                week.days[day] = week.days[day].filter(block => block.id !== blockId);
+            });
+        });
+
+        editablePlan.weeks.forEach(week => {
+            Object.keys(week.days).forEach(day => {
+                week.days[day] = week.days[day].filter(block => block.id !== blockId);
+            });
+        });
+
         renderBlocks();
+        renderPlan();
     } catch (error) {
         console.error('Error deleting block:', error);
     }
+}
+
+function showBlockDetails(event) {
+    if (event.target.classList.contains('remove-block')) return;
+    
+    const blockElement = event.currentTarget;
+    const blockId = parseInt(blockElement.dataset.blockId);
+    const block = blocks.find(b => b.id === blockId);
+    
+    if (!block) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'block-details-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <button class="modal-close">×</button>
+            <h2 class="modal-title">${block.title}</h2>
+            <div class="modal-description">${block.description || 'No description provided'}</div>
+            ${block.tags ? `
+                <div class="modal-tags">
+                    ${block.tags.split(',').map(tag => `
+                        <span class="tag">${tag.trim()}</span>
+                    `).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    modal.addEventListener('click', e => {
+        if (e.target === modal || e.target.classList.contains('modal-close')) {
+            modal.remove();
+        }
+    });
 }
 
 // Drag and drop handlers
@@ -291,6 +356,10 @@ function renderPlan() {
         zone.addEventListener('dragleave', handleDragLeave);
         zone.addEventListener('drop', handleDrop);
     });
+
+    document.querySelectorAll('.assigned-block').forEach(block => {
+        block.addEventListener('click', showBlockDetails);
+    });
 }
 
 function renderDays(days) {
@@ -306,13 +375,13 @@ function renderDays(days) {
                             <div class="block-title">${block.title}</div>
                             <button onclick="removeBlock(event)" class="remove-block">×</button>
                         </div>
-                    </div>
+                        </div>
                 `).join('')}
                 <div class="drop-zone" data-day="${index + 1}">
                     Drop block here
                 </div>
+                </div>
             </div>
-        </div>
     `).join('');
 }
 
