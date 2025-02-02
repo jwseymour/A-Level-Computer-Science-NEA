@@ -419,15 +419,14 @@ app.put('/api/plans/:id', authenticateUser, async (req, res) => {
   const userId = req.user.id;
   const { title, tags, is_favorited, weeks } = req.body;
 
-  // Start a transaction
+  // First verify the plan belongs to the user
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
 
-    // First verify and update the plan
     db.get(
       'SELECT * FROM training_plans WHERE id = ? AND user_id = ?',
       [planId, userId],
-      (err, plan) => {
+      async (err, plan) => {
         if (err) {
           db.run('ROLLBACK');
           res.status(400).json({ error: err.message });
@@ -439,101 +438,124 @@ app.put('/api/plans/:id', authenticateUser, async (req, res) => {
           return;
         }
 
-        // Update plan details
-        db.run(
-          'UPDATE training_plans SET title = ?, tags = ?, is_favorited = ? WHERE id = ?',
-          [title, tags, is_favorited, planId],
-          async function(err) {
-            if (err) {
-              db.run('ROLLBACK');
-              res.status(400).json({ error: err.message });
-              return;
+        try {
+          // Update plan details
+          await new Promise((resolve, reject) => {
+            db.run(
+              'UPDATE training_plans SET title = ?, tags = ?, is_favorited = ? WHERE id = ?',
+              [title, tags, is_favorited, planId],
+              err => err ? reject(err) : resolve()
+            );
+          });
+
+          // Get existing weeks
+          const existingWeeks = await new Promise((resolve, reject) => {
+            db.all('SELECT * FROM plan_weeks WHERE plan_id = ?', [planId], (err, weeks) => {
+              if (err) reject(err);
+              else resolve(weeks || []);
+            });
+          });
+
+          // Update or create weeks
+          for (const week of weeks) {
+            if (week.id) {
+              // Update existing week
+              await new Promise((resolve, reject) => {
+                db.run(
+                  'UPDATE plan_weeks SET week_number = ? WHERE id = ? AND plan_id = ?',
+                  [week.week_number, week.id, planId],
+                  err => err ? reject(err) : resolve()
+                );
+              });
+            } else {
+              // Create new week
+              await new Promise((resolve, reject) => {
+                db.run(
+                  'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+                  [planId, week.week_number],
+                  function(err) {
+                    if (err) reject(err);
+                    else {
+                      week.id = this.lastID;
+                      resolve();
+                    }
+                  }
+                );
+              });
             }
 
-            try {
-              // Get existing weeks
-              const existingWeeks = await new Promise((resolve, reject) => {
-                db.all('SELECT * FROM plan_weeks WHERE plan_id = ?', [planId], (err, weeks) => {
-                  if (err) reject(err);
-                  else resolve(weeks || []);
-                });
+            // Get existing daily blocks for this week
+            const existingDailyBlocks = await new Promise((resolve, reject) => {
+              db.all('SELECT * FROM daily_blocks WHERE week_id = ?', [week.id], (err, blocks) => {
+                if (err) reject(err);
+                else resolve(blocks || []);
               });
+            });
 
-              // Update or create weeks
-              for (const week of weeks) {
-                if (week.id) {
-                  // Update existing week
+            // Handle daily blocks for this week
+            for (const [dayNum, blocks] of Object.entries(week.days)) {
+              for (const block of blocks) {
+                if (block.daily_block_id) {
+                  // Update existing daily block
                   await new Promise((resolve, reject) => {
                     db.run(
-                      'UPDATE plan_weeks SET week_number = ? WHERE id = ? AND plan_id = ?',
-                      [week.week_number, week.id, planId],
+                      'UPDATE daily_blocks SET time_slot = ? WHERE id = ?',
+                      [block.time_slot, block.daily_block_id],
                       err => err ? reject(err) : resolve()
                     );
                   });
                 } else {
-                  // Create new week
+                  // Create new daily block
                   await new Promise((resolve, reject) => {
                     db.run(
-                      'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                      [planId, week.week_number],
-                      function(err) {
-                        if (err) reject(err);
-                        else {
-                          week.id = this.lastID;
-                          resolve();
-                        }
-                      }
+                      'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
+                      [week.id, dayNum, block.id, block.time_slot],
+                      err => err ? reject(err) : resolve()
                     );
                   });
                 }
-
-                // Handle daily blocks for this week
-                for (const [dayNum, blocks] of Object.entries(week.days)) {
-                  for (const block of blocks) {
-                    if (block.daily_block_id) {
-                      // Update existing daily block
-                      await new Promise((resolve, reject) => {
-                        db.run(
-                          'UPDATE daily_blocks SET time_slot = ? WHERE id = ?',
-                          [block.time_slot, block.daily_block_id],
-                          err => err ? reject(err) : resolve()
-                        );
-                      });
-                    } else {
-                      // Create new daily block
-                      await new Promise((resolve, reject) => {
-                        db.run(
-                          'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                          [week.id, dayNum, block.id, block.time_slot],
-                          err => err ? reject(err) : resolve()
-                        );
-                      });
-                    }
-                  }
-                }
               }
+            }
 
-              // Remove weeks that are no longer in the plan
-              const keepWeekIds = weeks.map(w => w.id).filter(id => id);
-              if (keepWeekIds.length > 0) {
+            // Delete daily blocks that are no longer in the plan
+            const keepDailyBlockIds = Object.values(week.days)
+            .flat()
+            .filter(b => b.daily_block_id)
+            .map(b => b.daily_block_id);
+
+            for (const existingBlock of existingDailyBlocks) {
+            if (!keepDailyBlockIds.includes(existingBlock.id)) {
                 await new Promise((resolve, reject) => {
-                  db.run(
-                    `DELETE FROM plan_weeks WHERE plan_id = ? AND id NOT IN (${keepWeekIds.join(',')})`,
-                    [planId],
-                    err => err ? reject(err) : resolve()
-                  );
+                    db.run(
+                        'DELETE FROM daily_blocks WHERE id = ?',
+                        [existingBlock.id],
+                        err => err ? reject(err) : resolve()
+                    );
                 });
-              }
-
-              db.run('COMMIT');
-              res.json({ success: true });
-
-            } catch (error) {
-              db.run('ROLLBACK');
-              res.status(400).json({ error: error.message });
+            }
             }
           }
-        );
+
+          // Remove weeks that are no longer in the plan
+          const keepWeekIds = weeks.map(w => w.id).filter(id => id);
+          for (const existingWeek of existingWeeks) {
+            if (!keepWeekIds.includes(existingWeek.id)) {
+              await new Promise((resolve, reject) => {
+                db.run(
+                  'DELETE FROM plan_weeks WHERE id = ?',
+                  [existingWeek.id],
+                  err => err ? reject(err) : resolve()
+                );
+              });
+            }
+          }
+
+          db.run('COMMIT');
+          res.json({ success: true });
+        } catch (error) {
+          db.run('ROLLBACK');
+          res.status(400).json({ error: error.message });
+        }
       }
     );
   });

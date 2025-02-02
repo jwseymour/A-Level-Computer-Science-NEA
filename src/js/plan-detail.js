@@ -189,23 +189,37 @@ function removeBlock(event) {
     
     const weekId = parseInt(weekElement.dataset.weekId);
     const dayNumber = parseInt(dayElement.querySelector('.drop-zone').dataset.day);
-    const dailyBlockId = parseInt(blockElement.dataset.dailyBlockId);
+    const dailyBlockId = blockElement.dataset.dailyBlockId === "null" ? null : parseInt(blockElement.dataset.dailyBlockId);
     const blockId = parseInt(blockElement.dataset.blockId);
 
     // Update editablePlan
     const week = editablePlan.weeks.find(w => w.id === weekId);
     if (week && week.days[dayNumber]) {
-        week.days[dayNumber] = week.days[dayNumber].filter(block => 
-            block.id !== blockId || block.daily_block_id !== dailyBlockId
-        );
+        if (dailyBlockId === null) {
+            // Remove newly added blocks that haven't been saved yet
+            week.days[dayNumber] = week.days[dayNumber].filter(block => 
+                block.id !== blockId
+            );
+        } else {
+            // Remove existing blocks with a daily_block_id
+            week.days[dayNumber] = week.days[dayNumber].filter(block => 
+                block.daily_block_id !== dailyBlockId
+            );
+        }
     }
 
     // Update currentPlan
     const currentWeek = currentPlan.weeks.find(w => w.id === weekId);
     if (currentWeek && currentWeek.days[dayNumber]) {
-        currentWeek.days[dayNumber] = currentWeek.days[dayNumber].filter(block => 
-            block.id !== blockId || block.daily_block_id !== dailyBlockId
-        );
+        if (dailyBlockId === null) {
+            currentWeek.days[dayNumber] = currentWeek.days[dayNumber].filter(block => 
+                block.id !== blockId
+            );
+        } else {
+            currentWeek.days[dayNumber] = currentWeek.days[dayNumber].filter(block => 
+                block.daily_block_id !== dailyBlockId
+            );
+        }
     }
 
     // Update UI
@@ -302,6 +316,52 @@ function renderDays(days) {
     `).join('');
 }
 
+function addWeek() {
+    const lastWeek = currentPlan.weeks[currentPlan.weeks.length - 1];
+    const newWeekNumber = lastWeek.week_number + 1;
+    
+    // Add to currentPlan
+    const newWeek = {
+        id: null,  // Will be assigned by server
+        week_number: newWeekNumber,
+        days: {}
+    };
+    currentPlan.weeks.push(newWeek);
+    
+    // Add to editablePlan
+    editablePlan.weeks.push({
+        id: null,
+        week_number: newWeekNumber,
+        days: {}
+    });
+    
+    renderPlan();
+}
+
+function deleteWeek(event) {
+    event.preventDefault();
+    const weekElement = event.target.closest('.week-container');
+    const weekId = parseInt(weekElement.dataset.weekId);
+    
+    if (!confirm('Are you sure you want to delete this week?')) return;
+    
+    // Remove from currentPlan
+    currentPlan.weeks = currentPlan.weeks.filter(week => week.id !== weekId);
+    
+    // Remove from editablePlan
+    editablePlan.weeks = editablePlan.weeks.filter(week => week.id !== weekId);
+    
+    // Renumber remaining weeks
+    currentPlan.weeks.forEach((week, index) => {
+        week.week_number = index + 1;
+    });
+    editablePlan.weeks.forEach((week, index) => {
+        week.week_number = index + 1;
+    });
+    
+    renderPlan();
+}
+
 // New block creation
 document.getElementById('newBlockBtn').addEventListener('click', async () => {
     const title = prompt('Enter block title:');
@@ -332,6 +392,7 @@ document.getElementById('newBlockBtn').addEventListener('click', async () => {
 
 // Save changes
 document.getElementById('saveBtn').addEventListener('click', async () => {
+    console.log(editablePlan);
     try {
         const response = await fetch(`/api/plans/${planId}`, {
             method: 'PUT',
