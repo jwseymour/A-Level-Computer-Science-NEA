@@ -194,17 +194,90 @@ function handleDragLeave(e) {
     e.currentTarget.classList.remove('dragover');
 }
 
+function handleAssignedBlockDragStart(e) {
+    const blockElement = e.target;
+    // Store both block ID and daily block ID in the transfer data
+    const data = {
+        blockId: blockElement.dataset.blockId,
+        dailyBlockId: blockElement.dataset.dailyBlockId,
+        timeSlot: blockElement.dataset.timeSlot,
+        sourceWeekId: blockElement.closest('.week-container').dataset.weekId,
+        sourceDayNumber: blockElement.closest('.day-container').querySelector('.drop-zone').dataset.day
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(data));
+    e.target.classList.add('dragging');
+}
+
 function handleDrop(e) {
     e.preventDefault();
     e.currentTarget.classList.remove('dragover');
     
-    const blockId = parseInt(e.dataTransfer.getData('text/plain'));
     const dayElement = e.currentTarget;
     const weekElement = dayElement.closest('.week-container');
-    
     const weekId = parseInt(weekElement.dataset.weekId);
     const dayNumber = parseInt(dayElement.dataset.day);
+
+    try {
+        // Try to parse as JSON first (for assigned blocks)
+        const jsonData = e.dataTransfer.getData('application/json');
+        if (jsonData) {
+            const data = JSON.parse(jsonData);
+            handleAssignedBlockDrop(data, weekId, dayNumber);
+            return;
+        }
+    } catch (err) {
+        // If not JSON, handle as a new block drop
+        const blockId = parseInt(e.dataTransfer.getData('text/plain'));
+        handleNewBlockDrop(blockId, weekId, dayNumber);
+    }
+}
+
+function handleAssignedBlockDrop(data, targetWeekId, targetDayNumber) {
+    const sourceWeekId = parseInt(data.sourceWeekId);
+    const sourceDayNumber = parseInt(data.sourceDayNumber);
+    const blockId = parseInt(data.blockId);
+    const dailyBlockId = data.dailyBlockId === "null" ? null : parseInt(data.dailyBlockId);
     
+    // Don't do anything if dropped in the same spot
+    if (sourceWeekId === targetWeekId && sourceDayNumber === targetDayNumber) {
+        return;
+    }
+
+    // Remove from source location
+    const sourceWeek = editablePlan.weeks.find(w => w.id === sourceWeekId);
+    if (sourceWeek && sourceWeek.days[sourceDayNumber]) {
+        if (dailyBlockId === null) {
+            sourceWeek.days[sourceDayNumber] = sourceWeek.days[sourceDayNumber].filter(block => 
+                block.id !== blockId
+            );
+        } else {
+            sourceWeek.days[sourceDayNumber] = sourceWeek.days[sourceDayNumber].filter(block => 
+                block.daily_block_id !== dailyBlockId
+            );
+        }
+    }
+
+    // Add to target location
+    const targetWeek = editablePlan.weeks.find(w => w.id === targetWeekId);
+    if (!targetWeek.days[targetDayNumber]) {
+        targetWeek.days[targetDayNumber] = [];
+    }
+
+    // Add block to new location
+    targetWeek.days[targetDayNumber].push({
+        id: blockId,
+        daily_block_id: null, // Reset daily_block_id as this is effectively a new assignment
+        time_slot: data.timeSlot
+    });
+
+    // Update currentPlan to match
+    updateCurrentPlanBlocks(sourceWeekId, sourceDayNumber, targetWeekId, targetDayNumber, blockId, dailyBlockId);
+    
+    // Update UI
+    renderPlan();
+}
+
+function handleNewBlockDrop(blockId, weekId, dayNumber) {
     // Find the block details from our blocks array
     const block = blocks.find(b => b.id === blockId);
     if (!block) return;
@@ -227,7 +300,7 @@ function handleDrop(e) {
         time_slot: timeSlot
     });
 
-    // Update currentPlan to match editablePlan for this change
+    // Update currentPlan
     const currentWeek = currentPlan.weeks.find(w => w.id === weekId);
     if (!currentWeek.days[dayNumber]) {
         currentWeek.days[dayNumber] = [];
@@ -244,6 +317,33 @@ function handleDrop(e) {
 
     // Update UI
     renderPlan();
+}
+
+function updateCurrentPlanBlocks(sourceWeekId, sourceDayNumber, targetWeekId, targetDayNumber, blockId, dailyBlockId) {
+    // Remove from source
+    const sourceWeek = currentPlan.weeks.find(w => w.id === sourceWeekId);
+    if (sourceWeek && sourceWeek.days[sourceDayNumber]) {
+        const blockToMove = sourceWeek.days[sourceDayNumber].find(b => 
+            dailyBlockId === null ? b.id === blockId : b.daily_block_id === dailyBlockId
+        );
+        
+        sourceWeek.days[sourceDayNumber] = sourceWeek.days[sourceDayNumber].filter(b => 
+            dailyBlockId === null ? b.id !== blockId : b.daily_block_id !== dailyBlockId
+        );
+
+        // Add to target
+        const targetWeek = currentPlan.weeks.find(w => w.id === targetWeekId);
+        if (!targetWeek.days[targetDayNumber]) {
+            targetWeek.days[targetDayNumber] = [];
+        }
+
+        if (blockToMove) {
+            targetWeek.days[targetDayNumber].push({
+                ...blockToMove,
+                daily_block_id: null // Reset as this is effectively a new assignment
+            });
+        }
+    }
 }
 
 function removeBlock(event) {
@@ -357,8 +457,11 @@ function renderPlan() {
         zone.addEventListener('drop', handleDrop);
     });
 
+    // Add assigned blocks event listeners
     document.querySelectorAll('.assigned-block').forEach(block => {
         block.addEventListener('click', showBlockDetails);
+        block.addEventListener('dragstart', handleAssignedBlockDragStart);
+        block.addEventListener('dragend', handleDragEnd);
     });
 }
 
@@ -369,19 +472,23 @@ function renderDays(days) {
             <h4>${dayName}</h4>
             <div class="blocks-container">
                 ${(days[index + 1] || []).map(block => `
-                    <div class="assigned-block" data-block-id="${block.id}" data-daily-block-id="${block.daily_block_id}">
+                    <div class="assigned-block" 
+                         draggable="true"
+                         data-block-id="${block.id}" 
+                         data-daily-block-id="${block.daily_block_id}"
+                         data-time-slot="${block.time_slot}">
                         <div class="block-time">${block.time_slot || ''}</div>
                         <div class="block-info">
                             <div class="block-title">${block.title}</div>
                             <button onclick="removeBlock(event)" class="remove-block">×</button>
                         </div>
-                        </div>
+                    </div>
                 `).join('')}
                 <div class="drop-zone" data-day="${index + 1}">
                     Drop block here
                 </div>
-                </div>
             </div>
+        </div>
     `).join('');
 }
 
