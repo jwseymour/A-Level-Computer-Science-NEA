@@ -4,95 +4,89 @@ const db = new sqlite3.Database('./src/db/users.db');
 
 // Resource content in MDX format
 const resourceContent = `
-# Beginner to Intermediate Bouldering Progression
+# 6-Week Sport Climbing Endurance Program
 
 ## Overview
-This 8-week program is designed to take climbers from V2-V3 to V4-V5 through structured training.
+This program focuses on building climbing endurance for sport routes, targeting climbers who want to improve their stamina on longer routes.
 
 ## Program Goals
-- Develop base finger strength safely
-- Build climbing-specific core strength
-- Improve movement efficiency
-- Increase power endurance
-- Learn proper warm-up routines
+- Increase forearm endurance
+- Improve recovery between clips
+- Build aerobic capacity
+- Develop mental stamina
+- Perfect rest positions
 
 ## Weekly Structure
-Each week includes:
 - 3 climbing sessions
-- 2 supplementary training sessions
+- 2 cardio/antagonist sessions
 - 2 rest days
 
-## Key Focus Areas
-1. Technique Development
-   - Silent feet drills
-   - Precise foot placement
-   - Body positioning
-   - Dynamic movement control
+## Training Methods
+1. ARC Training (Aerobic Restoration and Capillarity)
+   - 20-30 minute continuous climbing
+   - Focus on efficient movement
+   - Stay below pump threshold
 
-2. Strength Building
-   - Progressive hangboard training
-   - Core conditioning
-   - Pull strength development
+2. Interval Training
+   - 4x4 minute on-wall intervals
+   - 1:1 work/rest ratio
+   - Progressive difficulty increase
 
-3. Power Endurance
-   - 4x4 boulder circuits
-   - Linked boulder problems
-   - Rest management
+3. Pyramid Sessions
+   - Start easy, build up, then down
+   - Example: 5.9, 5.10a, 5.10c, 5.11a, 5.10c, 5.10a, 5.9
+   - Focus on perfect form
 
-## Recovery Protocol
-- Active recovery exercises
-- Proper nutrition timing
+## Recovery Strategies
+- Light stretching
+- Proper hydration
+- Protein timing
 - Sleep optimization
-- Mobility work
 
-## Progress Tracking
-Track these metrics weekly:
-- Max boulder grade
-- Number of problems at each grade
-- Hangboard max hang times
-- Core exercise progression
+## Progress Markers
+- Route grades at flash level
+- Time spent on continuous climbing
+- Recovery speed between burns
+- Number of routes per session
 `;
 
-// Resource data
 const resource = {
-    title: "8-Week Bouldering Progression Plan",
-    description: "A structured training program to progress from V2-V3 to V4-V5 through systematic training and technique development.",
+    title: "Sport Climbing Endurance Builder",
+    description: "A 6-week program designed to improve climbing endurance and stamina for sport routes.",
     content: resourceContent,
-    tags: "bouldering,progression,beginner,intermediate,training plan"
+    tags: "sport climbing,endurance,stamina,training plan,ARC"
 };
 
-// Training blocks data
 const blocks = [
     {
-        title: "Technique Fundamentals",
-        description: "Focus on silent feet, precise movements, and body positioning",
-        tags: "technique,fundamentals,movement",
+        title: "ARC Training Session",
+        description: "Low-intensity, long-duration climbing for capillarity development",
+        tags: "endurance,ARC,technique",
         is_favorited: 0
     },
     {
-        title: "Beginner Hangboard",
-        description: "Introduction to hangboard training with focus on proper form and safety",
-        tags: "strength,hangboard,beginner",
+        title: "Interval Power Endurance",
+        description: "4x4 minute climbing intervals with structured rest",
+        tags: "intervals,power endurance,structured",
         is_favorited: 0
     },
     {
-        title: "4x4 Boulder Circuit",
-        description: "Power endurance training through linked boulder problems",
-        tags: "endurance,power,circuit",
+        title: "Route Pyramid Session",
+        description: "Progressive grade pyramid for endurance building",
+        tags: "pyramid,endurance,progression",
         is_favorited: 0
     },
     {
-        title: "Core Foundation",
-        description: "Essential core exercises for climbing stability",
-        tags: "core,strength,foundation",
+        title: "Recovery Protocol",
+        description: "Active recovery and mobility work",
+        tags: "recovery,mobility,maintenance",
         is_favorited: 0
     }
 ];
 
-// Training plan data with proper block references
 const plan = {
-    title: "8-Week Climbing Progression",
-    tags: "bouldering,progression,structured",
+    title: "6-Week Endurance Program",
+    tags: "endurance,sport climbing,structured",
     is_favorited: 0,
     weeks: [
         {
@@ -100,18 +94,18 @@ const plan = {
             days: {
                 1: [{ 
                     id: null,
-                    title: "Technique Fundamentals",
-                    time_slot: "09:00" 
+                    title: "ARC Training Session",
+                    time_slot: "18:00" 
                 }],
                 3: [{ 
                     id: null,
-                    title: "Core Foundation",
-                    time_slot: "09:00" 
+                    title: "Interval Power Endurance",
+                    time_slot: "18:00" 
                 }],
                 5: [{ 
                     id: null,
-                    title: "Beginner Hangboard",
-                    time_slot: "09:00" 
+                    title: "Route Pyramid Session",
+                    time_slot: "18:00" 
                 }]
             }
         },
@@ -120,18 +114,18 @@ const plan = {
             days: {
                 2: [{ 
                     id: null,
-                    title: "4x4 Boulder Circuit",
-                    time_slot: "09:00" 
+                    title: "ARC Training Session",
+                    time_slot: "18:00" 
                 }],
                 4: [{ 
                     id: null,
-                    title: "Technique Fundamentals",
-                    time_slot: "09:00" 
+                    title: "Interval Power Endurance",
+                    time_slot: "18:00" 
                 }],
                 6: [{ 
                     id: null,
-                    title: "Core Foundation",
-                    time_slot: "09:00" 
+                    title: "Recovery Protocol",
+                    time_slot: "10:00" 
                 }]
             }
         }
