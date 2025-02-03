@@ -1007,3 +1007,137 @@ button:hover {
 .block-favorite-indicator.active {
     color: gold;
 }
+
+/* Resource Detail Page Styles */
+.resource-detail-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+.resource-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.resource-detail-header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    color: #2c3e50;
+    flex-grow: 1;
+}
+
+.resource-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 3rem;
+}
+
+.resource-description {
+    font-size: 1.1rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.resource-tags {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.resource-content-mdx {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #333;
+}
+
+.resource-content-mdx h1,
+.resource-content-mdx h2,
+.resource-content-mdx h3 {
+    color: #2c3e50;
+    margin: 1.5rem 0 1rem;
+}
+
+.resource-content-mdx h1 {
+    font-size: 1.8rem;
+    border-bottom: 2px solid #eaeaea;
+    padding-bottom: 0.5rem;
+}
+
+.resource-content-mdx h2 {
+    font-size: 1.5rem;
+}
+
+.resource-content-mdx h3 {
+    font-size: 1.25rem;
+}
+
+.resource-content-mdx ul,
+.resource-content-mdx ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.resource-content-mdx li {
+    margin: 0.5rem 0;
+}
+
+.resource-sections {
+    display: grid;
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.training-plans-section,
+.training-blocks-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.training-plans-section h2,
+.training-blocks-section h2 {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin: 0 0 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eaeaea;
+}
+
+.plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .resource-detail-container {
+        padding: 0 1rem;
+    }
+
+    .resource-detail-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .resource-detail-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .resource-content,
+    .training-plans-section,
+    .training-blocks-section {
+        padding: 1.5rem;
+    }
+}

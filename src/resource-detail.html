@@ -12,17 +12,19 @@
     <script>
         loadNavbar();
     </script>
-    <div class="resource-detail-container">
-        <div class="resource-detail-header">
-            <button id="backBtn" class="secondary-button">← Back</button>
+    <main class="resource-detail-container">
+        <header class="resource-detail-header">
+            <button id="backBtn" class="secondary-button">← Back to Resources</button>
             <h1 id="resourceTitle">Loading...</h1>
-        </div>
-        <div class="resource-content">
+        </header>
+        
+        <article class="resource-content">
             <div id="resourceDescription" class="resource-description"></div>
             <div id="resourceTags" class="resource-tags"></div>
             <div id="resourceContent" class="resource-content-mdx"></div>
-        </div>
-        <div class="resource-sections">
+        </article>
+        
+        <section class="resource-sections">
             <div class="training-plans-section">
                 <h2>Training Plans</h2>
                 <div id="resourcePlans" class="plans-grid"></div>
@@ -31,8 +33,8 @@
                 <h2>Training Blocks</h2>
                 <div id="resourceBlocks" class="blocks-list"></div>
             </div>
-        </div>
-    </div>
+        </section>
+    </main>
     <script src="js/resource-detail.js"></script>
 </body>
 </html>
