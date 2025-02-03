@@ -140,6 +140,55 @@ async function deleteBlock(blockId, event) {
     }
 }
 
+function showBlockSelectionModal(dropZone) {
+    const modal = document.createElement('div');
+    modal.className = 'block-selection-modal';
+    
+    const weekElement = dropZone.closest('.week-container');
+    const weekId = parseInt(weekElement.dataset.weekId);
+    const dayNumber = parseInt(dropZone.dataset.day);
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Training Block</h3>
+                <button class="modal-close">×</button>
+            </div>
+            <div class="modal-blocks">
+                ${blocks.map(block => `
+                    <div class="modal-block-item" data-block-id="${block.id}">
+                        <div class="block-title">${block.title}</div>
+                        <div class="block-description">${block.description || ''}</div>
+                        ${block.tags ? `<div class="block-tags">${block.tags}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    modal.querySelector('.modal-close').addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Add click handlers for blocks
+    modal.querySelectorAll('.modal-block-item').forEach(blockItem => {
+        blockItem.addEventListener('click', () => {
+            const blockId = parseInt(blockItem.dataset.blockId);
+            handleNewBlockDrop(blockId, weekId, dayNumber);
+            modal.remove();
+        });
+    });
+}
+
 function showBlockDetails(event) {
     if (event.target.classList.contains('remove-block')) return;
     
@@ -460,6 +509,7 @@ function renderPlan() {
         zone.addEventListener('dragover', handleDragOver);
         zone.addEventListener('dragleave', handleDragLeave);
         zone.addEventListener('drop', handleDrop);
+        zone.addEventListener('click', () => showBlockSelectionModal(zone));
     });
 
     // Add assigned blocks event listeners
@@ -490,7 +540,7 @@ function renderDays(days) {
                     </div>
                 `).join('')}
                 <div class="drop-zone" data-day="${index + 1}">
-                    Drop block here
+                    <span>Drop block here</span>
                 </div>
             </div>
         </div>
