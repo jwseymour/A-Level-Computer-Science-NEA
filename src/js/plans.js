@@ -7,6 +7,10 @@ if (!user) {
 const plansGrid = document.getElementById('plansGrid');
 const newPlanBtn = document.getElementById('newPlanBtn');
 
+
+let allPlans = [];
+let uniqueTags = new Set();
+
 // Update the renderPlans function (replaces the existing plansGrid.innerHTML assignment)
 function renderPlans(plans) {
     plansGrid.innerHTML = plans.map(plan => `
@@ -33,7 +37,6 @@ function renderPlans(plans) {
     `).join('');
 }
 
-// Update loadPlans to use the new render function
 async function loadPlans() {
     try {
         const response = await fetch('/api/plans', {
@@ -42,11 +45,47 @@ async function loadPlans() {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
         });
-        const plans = await response.json();
-        renderPlans(plans);
+        allPlans = await response.json();
+        
+        // Extract unique tags
+        uniqueTags = new Set();
+        allPlans.forEach(plan => {
+            if (plan.tags) {
+                plan.tags.split(',').forEach(tag => {
+                    uniqueTags.add(tag.trim());
+                });
+            }
+        });
+        
+        // Populate tag filter
+        const tagFilter = document.getElementById('tagFilter');
+        tagFilter.innerHTML = '<option value="">All Tags</option>' + 
+            Array.from(uniqueTags).sort().map(tag => 
+                `<option value="${tag}">${tag}</option>`
+            ).join('');
+        
+        filterPlans();
     } catch (error) {
         console.error('Error loading plans:', error);
     }
+}
+
+function filterPlans() {
+    const favoritesOnly = document.getElementById('favoritesOnly').checked;
+    const selectedTag = document.getElementById('tagFilter').value;
+    
+    const filteredPlans = allPlans.filter(plan => {
+        // Favorites filter
+        const matchesFavorite = !favoritesOnly || plan.is_favorited;
+        
+        // Tag filter
+        const matchesTag = !selectedTag || 
+            (plan.tags && plan.tags.split(',').map(t => t.trim()).includes(selectedTag));
+        
+        return matchesFavorite && matchesTag;
+    });
+    
+    renderPlans(filteredPlans);
 }
 
 // Add delete functionality
@@ -121,6 +160,9 @@ async function createNewPlan(title, tags = '') {
         console.error('Error creating plan:', error);
     }
 }
+
+document.getElementById('favoritesOnly').addEventListener('change', filterPlans);
+document.getElementById('tagFilter').addEventListener('change', filterPlans);
 
 // Handle new plan button click
 newPlanBtn.addEventListener('click', () => {
