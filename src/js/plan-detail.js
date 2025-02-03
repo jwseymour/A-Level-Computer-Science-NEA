@@ -217,18 +217,23 @@ function handleDrop(e) {
     const weekId = parseInt(weekElement.dataset.weekId);
     const dayNumber = parseInt(dayElement.dataset.day);
 
+    // First try to get text/plain data (for new blocks)
+    const plainData = e.dataTransfer.getData('text/plain');
+    if (plainData) {
+        const blockId = parseInt(plainData);
+        handleNewBlockDrop(blockId, weekId, dayNumber);
+        return;
+    }
+
+    // If no text/plain data, try JSON data (for assigned blocks)
     try {
-        // Try to parse as JSON first (for assigned blocks)
         const jsonData = e.dataTransfer.getData('application/json');
         if (jsonData) {
             const data = JSON.parse(jsonData);
             handleAssignedBlockDrop(data, weekId, dayNumber);
-            return;
         }
     } catch (err) {
-        // If not JSON, handle as a new block drop
-        const blockId = parseInt(e.dataTransfer.getData('text/plain'));
-        handleNewBlockDrop(blockId, weekId, dayNumber);
+        console.error('Error handling drop:', err);
     }
 }
 
