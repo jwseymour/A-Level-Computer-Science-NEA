@@ -843,6 +843,109 @@ app.get('/api/resources/:id', (req, res) => {
   );
 });
 
+// Copy a training plan from a resource
+app.post('/api/plans/copy', authenticateUser, async (req, res) => {
+  const userId = req.user.id;
+  const plan = req.body;
+  
+  db.serialize(() => {
+      db.run('BEGIN TRANSACTION');
+      
+      try {
+          // Step 1: Create new training blocks for the user
+          const blockPromises = new Set(); // Use Set to avoid duplicates
+          const uniqueBlocks = new Map(); // Track unique blocks by title
+
+          plan.weeks.forEach(week => {
+              Object.values(week.days).forEach(blocks => {
+                  blocks.forEach(block => {
+                      // Only create a new block if we haven't seen this title before
+                      if (!uniqueBlocks.has(block.title)) {
+                          uniqueBlocks.set(block.title, block);
+                          blockPromises.add(new Promise((resolve, reject) => {
+                              db.run(
+                                  'INSERT INTO training_blocks (user_id, title, description, tags, is_favorited) VALUES (?, ?, ?, ?, ?)',
+                                  [userId, block.title, block.description, block.tags, 0],
+                                  function(err) {
+                                      if (err) reject(err);
+                                      resolve({
+                                          originalTitle: block.title,
+                                          newId: this.lastID,
+                                          block: {
+                                              id: this.lastID,
+                                              user_id: userId,
+                                              title: block.title,
+                                              description: block.description,
+                                              tags: block.tags,
+                                              is_favorited: 0
+                                          }
+                                      });
+                                  }
+                              );
+                          }));
+                      }
+                  });
+              });
+          });
+
+          Promise.all(Array.from(blockPromises)).then(createdBlocks => {
+              // Create a mapping of block titles to new block IDs and data
+              const blockMap = new Map(
+                  createdBlocks.map(block => [block.originalTitle, block])
+              );
+
+              // Step 2: Create the new plan
+              db.run(
+                  'INSERT INTO training_plans (user_id, title, tags, is_favorited) VALUES (?, ?, ?, ?)',
+                  [userId, plan.title, plan.tags, 0],
+                  function(err) {
+                      if (err) throw err;
+                      const newPlanId = this.lastID;
+
+                      // Step 3: Create weeks and daily blocks
+                      plan.weeks.forEach(week => {
+                          db.run(
+                              'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+                              [newPlanId, week.week_number],
+                              function(err) {
+                                  if (err) throw err;
+                                  const newWeekId = this.lastID;
+
+                                  // Step 4: Create daily blocks
+                                  Object.entries(week.days).forEach(([day, blocks]) => {
+                                      blocks.forEach(block => {
+                                          const newBlock = blockMap.get(block.title);
+                                          if (newBlock) {
+                                              db.run(
+                                                  'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
+                                                  [newWeekId, day, newBlock.newId, block.time_slot]
+                                              );
+                                          }
+                                      });
+                                  });
+                              }
+                          );
+                      });
+
+                      db.run('COMMIT');
+                      res.json({
+                          success: true,
+                          planId: newPlanId,
+                          blocks: Array.from(blockMap.values()).map(b => b.block)
+                      });
+                  }
+              );
+          }).catch(error => {
+              db.run('ROLLBACK');
+              throw error;
+          });
+      } catch (error) {
+          db.run('ROLLBACK');
+          res.status(400).json({ error: error.message });
+      }
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

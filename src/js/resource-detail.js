@@ -103,37 +103,20 @@ function renderResource(resource) {
 // Copy plan to user's collection
 async function copyPlan(plan) {
     try {
-        // Transform plan to correct format
-        const formattedPlan = {
-            title: plan.title,
-            tags: plan.tags,
-            is_favorited: plan.is_favorited,
-            weeks: plan.weeks.map(week => ({
-                week_number: week.week_number,
-                days: Object.entries(week.days).reduce((acc, [day, blocks]) => {
-                    acc[day] = blocks.map(block => ({
-                        id: block.id,  // Keep only the training_block id
-                        time_slot: block.time_slot
-                    }));
-                    return acc;
-                }, {})
-            }))
-        };
-
-        console.log('Formatted plan:', formattedPlan);
-        
-        const response = await fetch('/api/plans', {
+        const response = await fetch('/api/plans/copy', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(formattedPlan)
+            body: JSON.stringify(plan)
         });
         
         if (!response.ok) throw new Error('Failed to copy plan');
         
-        alert('Plan copied successfully!');
+        const result = await response.json();
+        alert('Plan and training blocks copied successfully!');
+        window.location.href = `/plan-detail.html?id=${result.planId}`;
     } catch (error) {
         console.error('Error copying plan:', error);
         alert('Failed to copy plan');
