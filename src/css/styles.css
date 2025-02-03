@@ -858,3 +858,152 @@ button:hover {
     font-size: 0.9rem;
     min-width: 150px;
 }
+
+.filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-right: 1rem;
+}
+
+.tag-filter {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    min-width: 150px;
+    background-color: white;
+}
+
+.favorite-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.favorite-filter:hover {
+    background-color: #f0f0f0;
+}
+
+.favorite-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #666;
+}
+
+.plans-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.plans-header h1 {
+    margin: 0;
+}
+
+.filters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+#tagFilter {
+    padding: 0.625rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    min-width: 150px;
+}
+
+.block-actions {
+    position: relative;
+}
+
+.dropdown-trigger {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    color: #666;
+}
+
+.dropdown-trigger:hover {
+    color: #333;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: none;
+    z-index: 1000;
+    min-width: 120px;
+}
+
+.dropdown-menu.active {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    white-space: nowrap;
+    color: #333;
+}
+
+.dropdown-item:hover {
+    background-color: #f5f5f5;
+}
+
+.dropdown-item.favorite-btn.active {
+    color: gold;
+}
+
+.dropdown-item.delete-btn {
+    color: #ff4444;
+}
+
+.dropdown-item.delete-btn:hover {
+    background-color: #fff0f0;
+}
+
+.block-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.block-favorite-indicator {
+    font-size: 1rem;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.block-favorite-indicator.active {
+    color: gold;
+}

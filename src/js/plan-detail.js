@@ -16,6 +16,9 @@ let blocks = [];
 let currentPlan = null;
 let editablePlan = null;  // For storing API-compatible format
 
+let allBlocks = [];
+let uniqueBlockTags = new Set();
+
 // Load training blocks
 async function loadBlocks() {
     try {
@@ -25,11 +28,45 @@ async function loadBlocks() {
             }
         });
         if (!response.ok) throw new Error('Failed to load blocks');
-        blocks = await response.json();
-        renderBlocks();
+        allBlocks = await response.json();
+        
+        // Extract unique tags
+        uniqueBlockTags = new Set();
+        allBlocks.forEach(block => {
+            if (block.tags) {
+                block.tags.split(',').forEach(tag => {
+                    uniqueBlockTags.add(tag.trim());
+                });
+            }
+        });
+        
+        // Populate tag filter
+        const tagFilter = document.getElementById('blockTagFilter');
+        tagFilter.innerHTML = '<option value="">All Tags</option>' + 
+            Array.from(uniqueBlockTags).sort().map(tag => 
+                `<option value="${tag}">${tag}</option>`
+            ).join('');
+        
+        filterBlocks();
     } catch (error) {
         console.error('Error loading blocks:', error);
     }
+}
+
+function filterBlocks() {
+    const favoritesOnly = document.getElementById('blocksFavoritesOnly').checked;
+    const selectedTag = document.getElementById('blockTagFilter').value;
+    
+    const filteredBlocks = allBlocks.filter(block => {
+        const matchesFavorite = !favoritesOnly || block.is_favorited;
+        const matchesTag = !selectedTag || 
+            (block.tags && block.tags.split(',').map(t => t.trim()).includes(selectedTag));
+        
+        return matchesFavorite && matchesTag;
+    });
+    
+    blocks = filteredBlocks;
+    renderBlocks();
 }
 
 function renderBlocks() {
@@ -37,10 +74,26 @@ function renderBlocks() {
     blocksList.innerHTML = blocks.map(block => `
         <div class="block-item" draggable="true" data-block-id="${block.id}">
             <div class="block-header">
-                <div class="block-title">${block.title}</div>
+                <div class="block-title-wrapper">
+                    <div class="block-title">${block.title}</div>
+                    <span class="block-favorite-indicator ${block.is_favorited ? 'active' : ''}">★</span>
+                </div>
                 <div class="block-actions">
-                    <button onclick="editBlock(${block.id}, event)">✎</button>
-                    <button onclick="deleteBlock(${block.id}, event)">×</button>
+                    <button class="icon-button dropdown-trigger" onclick="toggleDropdown(event)">
+                        ⋮
+                    </button>
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item favorite-btn ${block.is_favorited ? 'active' : ''}" 
+                                onclick="toggleBlockFavorite(${block.id}, event)">
+                            ${block.is_favorited ? '★ Unfavorite' : '☆ Favorite'}
+                        </button>
+                        <button class="dropdown-item" onclick="editBlock(${block.id}, event)">
+                            ✎ Edit
+                        </button>
+                        <button class="dropdown-item delete-btn" onclick="deleteBlock(${block.id}, event)">
+                            × Delete
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="block-description">${block.description || ''}</div>
@@ -53,6 +106,51 @@ function renderBlocks() {
         block.addEventListener('dragstart', handleDragStart);
         block.addEventListener('dragend', handleDragEnd);
     });
+}
+
+function toggleDropdown(event) {
+    event.stopPropagation();
+    const dropdown = event.target.nextElementSibling;
+    
+    // Close all other dropdowns first
+    document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
+        if (menu !== dropdown) {
+            menu.classList.remove('active');
+        }
+    });
+    
+    dropdown.classList.toggle('active');
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.dropdown-menu') && !event.target.closest('.dropdown-trigger')) {
+        document.querySelectorAll('.dropdown-menu.active').forEach(menu => {
+            menu.classList.remove('active');
+        });
+    }
+});
+
+// Add toggle favorite function
+async function toggleBlockFavorite(blockId, event) {
+    event.stopPropagation();
+    try {
+        const response = await fetch(`/api/blocks/${blockId}/favorite`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to toggle favorite');
+        }
+
+        // Refresh blocks list
+        loadBlocks();
+    } catch (error) {
+        console.error('Error toggling block favorite:', error);
+    }
 }
 
 // Edit block
@@ -152,12 +250,29 @@ function showBlockSelectionModal(dropZone) {
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Select Training Block</h3>
+                <div class="filter-controls">
+                    <select id="modalBlockTagFilter" class="tag-filter">
+                        <option value="">All Tags</option>
+                        ${Array.from(uniqueBlockTags).sort().map(tag => 
+                            `<option value="${tag}">${tag}</option>`
+                        ).join('')}
+                    </select>
+                    <label class="favorite-filter">
+                        <input type="checkbox" id="modalBlocksFavoritesOnly">
+                        <span class="favorite-label">★ Favorites Only</span>
+                    </label>
+                </div>
                 <button class="modal-close">×</button>
             </div>
             <div class="modal-blocks">
                 ${blocks.map(block => `
                     <div class="modal-block-item" data-block-id="${block.id}">
-                        <div class="block-title">${block.title}</div>
+                        <div class="block-header">
+                            <div class="block-title-wrapper">
+                                <div class="block-title">${block.title}</div>
+                                <span class="block-favorite-indicator ${block.is_favorited ? 'active' : ''}">★</span>
+                            </div>
+                        </div>
                         <div class="block-description">${block.description || ''}</div>
                         ${block.tags ? `<div class="block-tags">${block.tags}</div>` : ''}
                     </div>
@@ -167,6 +282,47 @@ function showBlockSelectionModal(dropZone) {
     `;
     
     document.body.appendChild(modal);
+
+    // Add filter functionality
+    function filterModalBlocks() {
+        const favoritesOnly = document.getElementById('modalBlocksFavoritesOnly').checked;
+        const selectedTag = document.getElementById('modalBlockTagFilter').value;
+        
+        const filteredBlocks = allBlocks.filter(block => {
+            const matchesFavorite = !favoritesOnly || block.is_favorited;
+            const matchesTag = !selectedTag || 
+                (block.tags && block.tags.split(',').map(t => t.trim()).includes(selectedTag));
+            
+            return matchesFavorite && matchesTag;
+        });
+        
+        const modalBlocks = modal.querySelector('.modal-blocks');
+        modalBlocks.innerHTML = filteredBlocks.map(block => `
+            <div class="modal-block-item" data-block-id="${block.id}">
+                <div class="block-header">
+                    <div class="block-title-wrapper">
+                        <div class="block-title">${block.title}</div>
+                        <span class="block-favorite-indicator ${block.is_favorited ? 'active' : ''}">★</span>
+                    </div>
+                </div>
+                <div class="block-description">${block.description || ''}</div>
+                ${block.tags ? `<div class="block-tags">${block.tags}</div>` : ''}
+            </div>
+        `).join('');
+
+        // Reattach click handlers
+        attachBlockClickHandlers();
+    }
+
+    function attachBlockClickHandlers() {
+        modal.querySelectorAll('.modal-block-item').forEach(blockItem => {
+            blockItem.addEventListener('click', () => {
+                const blockId = parseInt(blockItem.dataset.blockId);
+                handleNewBlockDrop(blockId, weekId, dayNumber);
+                modal.remove();
+            });
+        });
+    }
     
     // Add event listeners
     modal.querySelector('.modal-close').addEventListener('click', () => {
@@ -178,15 +334,13 @@ function showBlockSelectionModal(dropZone) {
             modal.remove();
         }
     });
+
+    // Add filter event listeners
+    modal.querySelector('#modalBlockTagFilter').addEventListener('change', filterModalBlocks);
+    modal.querySelector('#modalBlocksFavoritesOnly').addEventListener('change', filterModalBlocks);
     
-    // Add click handlers for blocks
-    modal.querySelectorAll('.modal-block-item').forEach(blockItem => {
-        blockItem.addEventListener('click', () => {
-            const blockId = parseInt(blockItem.dataset.blockId);
-            handleNewBlockDrop(blockId, weekId, dayNumber);
-            modal.remove();
-        });
-    });
+    // Initial click handlers
+    attachBlockClickHandlers();
 }
 
 function showBlockDetails(event) {
@@ -593,6 +747,22 @@ function deleteWeek(event) {
     renderPlan();
 }
 
+// Initialize event listeners after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const blockTagFilter = document.getElementById('blockTagFilter');
+    const blocksFavoritesOnly = document.getElementById('blocksFavoritesOnly');
+    
+    if (blockTagFilter) {
+        blockTagFilter.addEventListener('change', filterBlocks);
+    }
+    
+    if (blocksFavoritesOnly) {
+        blocksFavoritesOnly.addEventListener('change', filterBlocks);
+    }
+    
+    // Load initial data
+    loadBlocks();
+});
 // New block creation
 document.getElementById('newBlockBtn').addEventListener('click', async () => {
     const title = prompt('Enter block title:');

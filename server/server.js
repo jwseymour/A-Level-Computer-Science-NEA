@@ -312,6 +312,46 @@ app.delete('/api/blocks/:id', authenticateUser, (req, res) => {
   );
 });
 
+// Toggle block favorite status
+app.put('/api/blocks/:id/favorite', authenticateUser, (req, res) => {
+  const blockId = req.params.id;
+  const userId = req.user.id;
+
+  // First verify the block belongs to the user and get current favorite status
+  db.get(
+      'SELECT is_favorited FROM training_blocks WHERE id = ? AND user_id = ?',
+      [blockId, userId],
+      (err, block) => {
+          if (err) {
+              res.status(400).json({ error: err.message });
+              return;
+          }
+          if (!block) {
+              res.status(404).json({ error: 'Block not found or unauthorized' });
+              return;
+          }
+
+          // Toggle the favorite status
+          const newFavoriteStatus = block.is_favorited ? 0 : 1;
+          
+          db.run(
+              'UPDATE training_blocks SET is_favorited = ? WHERE id = ? AND user_id = ?',
+              [newFavoriteStatus, blockId, userId],
+              function(err) {
+                  if (err) {
+                      res.status(400).json({ error: err.message });
+                      return;
+                  }
+                  res.json({ 
+                      success: true, 
+                      is_favorited: newFavoriteStatus 
+                  });
+              }
+          );
+      }
+  );
+});
+
 // Create new training plan
 app.post('/api/plans', authenticateUser, (req, res) => {
   const { title, tags } = req.body;

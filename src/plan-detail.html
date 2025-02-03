@@ -23,6 +23,15 @@
         <div class="blocks-section">
             <div class="blocks-header">
                 <h2>Training Blocks</h2>
+                <div class="filter-controls">
+                    <select id="blockTagFilter" class="tag-filter">
+                        <option value="">All Tags</option>
+                    </select>
+                    <label class="favorite-filter">
+                        <input type="checkbox" id="blocksFavoritesOnly">
+                        <span class="favorite-label">★ Favorites Only</span>
+                    </label>
+                </div>
                 <button id="newBlockBtn" class="secondary-button">New Block</button>
             </div>
             <div id="blocksList" class="blocks-list">
