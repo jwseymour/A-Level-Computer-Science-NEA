@@ -41,7 +41,8 @@ function renderResource(resource) {
     
     // Render tags if they exist
     if (resource.tags) {
-        resourceTags.innerHTML = resource.tags.split(',').map(tag => `
+        const tags = Array.isArray(resource.tags) ? resource.tags : resource.tags.split(',');
+        resourceTags.innerHTML = tags.map(tag => `
             <span class="resource-tag">${tag.trim()}</span>
         `).join('');
     }
@@ -60,12 +61,12 @@ function renderResource(resource) {
                 <div class="plan-header">
                     <h3>${plan.title}</h3>
                     ${user ? `
-                        <button class="primary-button" onclick="copyPlan(${JSON.stringify(plan).replace(/"/g, '&quot;')})">
+                        <button class="primary-button" onclick="copyPlan(${JSON.stringify(user.id ? resource.copyablePlans?.find(p => p.title === plan.title) || plan : plan).replace(/"/g, '&quot;')})">
                             Copy to My Plans
                         </button>
                     ` : ''}
                 </div>
-                ${plan.tags ? `<p class="plan-tags">${plan.tags}</p>` : ''}
+                ${plan.tags ? `<p class="plan-tags">${Array.isArray(plan.tags) ? plan.tags.join(', ') : plan.tags}</p>` : ''}
             </div>
         `).join('');
     } else {
@@ -80,7 +81,7 @@ function renderResource(resource) {
                 <div class="resource-block-header">
                     <div class="resource-block-title">${block.title}</div>
                     ${user ? `
-                        <button class="primary-button" onclick="copyBlock(${JSON.stringify(block).replace(/"/g, '&quot;')})">
+                        <button class="primary-button" onclick="copyBlock(${JSON.stringify(user.id ? resource.copyableBlocks?.find(b => b.title === block.title) || block : block).replace(/"/g, '&quot;')})">
                             Copy
                         </button>
                     ` : ''}
@@ -88,7 +89,7 @@ function renderResource(resource) {
                 <div class="resource-block-description">${block.description || ''}</div>
                 ${block.tags ? `
                     <div class="resource-block-tags">
-                        ${block.tags.split(',').map(tag => `
+                        ${(Array.isArray(block.tags) ? block.tags : block.tags.split(',')).map(tag => `
                             <span class="resource-tag">${tag.trim()}</span>
                         `).join('')}
                     </div>
@@ -103,13 +104,41 @@ function renderResource(resource) {
 // Copy plan to user's collection
 async function copyPlan(plan) {
     try {
+        // Get all unique block IDs from the plan
+        const uniqueBlockIds = new Set();
+        plan.weeks.forEach(week => {
+            Object.values(week.days).forEach(blocks => {
+                blocks.forEach(block => {
+                    uniqueBlockIds.add(block.block); // This is the YAML block ID
+                });
+            });
+        });
+
+        // Create the plan structure with proper block references
+        const planToSend = {
+            title: plan.title,
+            tags: Array.isArray(plan.tags) ? plan.tags.join(',') : plan.tags,
+            weeks: plan.weeks.map(week => ({
+                week_number: week.week_number,
+                days: Object.fromEntries(
+                    Object.entries(week.days).map(([day, blocks]) => [
+                        day,
+                        blocks.map(block => ({
+                            blockId: `${resourceId}/${block.block}`, // Include resource ID in path
+                            time_slot: block.time_slot
+                        }))
+                    ])
+                )
+            }))
+        };
+
         const response = await fetch('/api/plans/copy', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(plan)
+            body: JSON.stringify(planToSend)
         });
         
         if (!response.ok) throw new Error('Failed to copy plan');
@@ -126,13 +155,20 @@ async function copyPlan(plan) {
 // Copy block to user's collection
 async function copyBlock(block) {
     try {
+        // Ensure block has all required fields from YAML structure
+        const blockToSend = {
+            title: block.title,
+            description: block.description,
+            tags: Array.isArray(block.tags) ? block.tags.join(',') : block.tags
+        };
+
         const response = await fetch('/api/blocks', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(block)
+            body: JSON.stringify(blockToSend)
         });
         
         if (!response.ok) throw new Error('Failed to copy block');

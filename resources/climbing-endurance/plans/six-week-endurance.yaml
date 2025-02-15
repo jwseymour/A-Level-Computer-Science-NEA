@@ -1,0 +1,32 @@
+id: six-week-endurance
+title: "6-Week Endurance Program"
+tags:
+  - endurance
+  - sport climbing
+  - structured
+is_favorited: false
+
+weeks:
+  - week_number: 1
+    days:
+      1:  # Monday
+        - block: arc-training
+          time_slot: "18:00"
+      3:  # Wednesday
+        - block: interval-power-endurance
+          time_slot: "18:00"
+      5:  # Friday
+        - block: route-pyramid
+          time_slot: "18:00"
+
+  - week_number: 2
+    days:
+      2:  # Tuesday
+        - block: arc-training
+          time_slot: "18:00"
+      4:  # Thursday
+        - block: interval-power-endurance
+          time_slot: "18:00"
+      6:  # Saturday
+        - block: recovery-protocol
+          time_slot: "10:00"

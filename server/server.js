@@ -4,6 +4,9 @@ import bcrypt from 'bcryptjs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import jwt from 'jsonwebtoken';
+import { promises as fs } from 'fs';
+import path from 'path';
+import yaml from 'js-yaml';
 
 const SECRET_KEY = 'your-secret-key'; // In production, use an environment variable
 
@@ -90,40 +93,6 @@ db.run(`
     time_slot TEXT,
     FOREIGN KEY (week_id) REFERENCES plan_weeks(id) ON DELETE CASCADE,
     FOREIGN KEY (block_id) REFERENCES training_blocks(id)
-  )
-`);
-
-// Resources table
-db.run(`
-  CREATE TABLE IF NOT EXISTS resources (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    description TEXT,
-    content TEXT,
-    tags TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-
-// Resource blocks table (to store which blocks belong to which resources)
-db.run(`
-  CREATE TABLE IF NOT EXISTS resource_blocks (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    resource_id INTEGER,
-    block_id INTEGER,
-    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
-    FOREIGN KEY (block_id) REFERENCES training_blocks(id) ON DELETE CASCADE
-  )
-`);
-
-// Resource plans table (to store which plans belong to which resources)
-db.run(`
-  CREATE TABLE IF NOT EXISTS resource_plans (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    resource_id INTEGER,
-    plan_id INTEGER,
-    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
-    FOREIGN KEY (plan_id) REFERENCES training_plans(id) ON DELETE CASCADE
   )
 `);
 
@@ -719,22 +688,51 @@ app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
 });
 
 // Get all resources (basic info only)
-app.get('/api/resources', (req, res) => {
-  db.all(
-    'SELECT id, title, description, tags, created_at FROM resources ORDER BY created_at DESC',
-    [],
-    (err, resources) => {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
-      }
-      res.json(resources);
-    }
-  );
+app.get('/api/resources', async (req, res) => {
+  try {
+    const resourcesDir = path.join(process.cwd(), 'resources');
+    const directories = await fs.readdir(resourcesDir, { withFileTypes: true });
+    
+    // Get only directories
+    const resourceDirs = directories.filter(dirent => dirent.isDirectory());
+    
+    // Read each resource's index.yaml
+    const resources = await Promise.all(
+      resourceDirs.map(async (dir) => {
+        const indexPath = path.join(resourcesDir, dir.name, 'index.yaml');
+        try {
+          const fileContent = await fs.readFile(indexPath, 'utf8');
+          const resource = yaml.load(fileContent);
+          
+          // Match the existing API response structure
+          return {
+            id: resource.id,
+            title: resource.title,
+            description: resource.description,
+            tags: Array.isArray(resource.tags) ? resource.tags.join(',') : resource.tags,
+            created_at: resource.created_at
+          };
+        } catch (err) {
+          console.error(`Error reading resource ${dir.name}:`, err);
+          return null;
+        }
+      })
+    );
+
+    // Filter out any failed reads and sort by created_at
+    const validResources = resources
+      .filter(r => r !== null)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    res.json(validResources);
+  } catch (error) {
+    console.error('Error loading resources:', error);
+    res.status(500).json({ error: 'Failed to load resources' });
+  }
 });
 
 // Get detailed resource information
-app.get('/api/resources/:id', (req, res) => {
+app.get('/api/resources/:id', async (req, res) => {
   const resourceId = req.params.id;
   const token = req.headers.authorization?.split(' ')[1];
   let userId = null;
@@ -745,142 +743,78 @@ app.get('/api/resources/:id', (req, res) => {
       const decoded = jwt.verify(token, SECRET_KEY);
       userId = decoded.id;
     } catch (err) {
-      // Invalid token, but we'll continue without user context
       console.warn('Invalid token provided');
     }
   }
 
-  // Get resource basic info
-  db.get(
-    'SELECT * FROM resources WHERE id = ?',
-    [resourceId],
-    (err, resource) => {
-      if (err) {
-        res.status(400).json({ error: err.message });
-        return;
-      }
-      if (!resource) {
-        res.status(404).json({ error: 'Resource not found' });
-        return;
-      }
+  try {
+    const resourcePath = path.join(process.cwd(), 'resources', resourceId);
+    
+    // Load main resource data
+    const indexFile = await fs.readFile(path.join(resourcePath, 'index.yaml'), 'utf8');
+    const resource = yaml.load(indexFile);
 
-      // Get associated blocks
-      db.all(
-        `SELECT tb.* 
-         FROM training_blocks tb
-         JOIN resource_blocks rb ON tb.id = rb.block_id
-         WHERE rb.resource_id = ?`,
-        [resourceId],
-        (err, blocks) => {
-          if (err) {
-            res.status(400).json({ error: err.message });
-            return;
-          }
+    // Load content
+    const contentFile = await fs.readFile(path.join(resourcePath, 'content.md'), 'utf8');
+    resource.content = contentFile;
 
-          // Get associated plans with their weeks and daily blocks
-          db.all(
-            `SELECT tp.* 
-             FROM training_plans tp
-             JOIN resource_plans rp ON tp.id = rp.plan_id
-             WHERE rp.resource_id = ?`,
-            [resourceId],
-            async (err, plans) => {
-              if (err) {
-                res.status(400).json({ error: err.message });
-                return;
-              }
+    // Load blocks
+    const blocks = await Promise.all(
+      resource.blocks.map(async (blockId) => {
+        const blockFile = await fs.readFile(
+          path.join(resourcePath, 'blocks', `${blockId}.yaml`),
+          'utf8'
+        );
+        return yaml.load(blockFile);
+      })
+    );
 
-              // For each plan, get its weeks and daily blocks
-              const detailedPlans = await Promise.all(plans.map(async plan => {
-                // Get weeks for this plan
-                const weeks = await new Promise((resolve, reject) => {
-                  db.all(
-                    'SELECT * FROM plan_weeks WHERE plan_id = ? ORDER BY week_number',
-                    [plan.id],
-                    (err, weeks) => err ? reject(err) : resolve(weeks)
-                  );
-                });
+    // Load plans
+    const plans = await Promise.all(
+      resource.plans.map(async (planId) => {
+        const planFile = await fs.readFile(
+          path.join(resourcePath, 'plans', `${planId}.yaml`),
+          'utf8'
+        );
+        return yaml.load(planFile);
+      })
+    );
 
-                // Get daily blocks for all weeks
-                const weekIds = weeks.map(w => w.id).join(',');
-                if (weekIds) {
-                  const dailyBlocks = await new Promise((resolve, reject) => {
-                    db.all(
-                      `SELECT db.*, tb.title, tb.description, tb.tags 
-                       FROM daily_blocks db 
-                       JOIN training_blocks tb ON db.block_id = tb.id 
-                       WHERE db.week_id IN (${weekIds})
-                       ORDER BY db.week_id, db.day_of_week`,
-                      [],
-                      (err, blocks) => err ? reject(err) : resolve(blocks)
-                    );
-                  });
+    // Format response to match existing structure
+    const response = {
+      id: resource.id,
+      title: resource.title,
+      description: resource.description,
+      content: resource.content,
+      tags: Array.isArray(resource.tags) ? resource.tags.join(',') : resource.tags,
+      created_at: resource.created_at,
+      blocks: blocks.map(block => ({
+        title: block.title,
+        description: block.description,
+        tags: Array.isArray(block.tags) ? block.tags.join(',') : block.tags
+      })),
+      plans: plans.map(plan => ({
+        title: plan.title,
+        tags: Array.isArray(plan.tags) ? plan.tags.join(',') : plan.tags,
+        weeks: plan.weeks.map(week => ({
+          week_number: week.week_number,
+          days: week.days
+        }))
+      }))
+    };
 
-                  // Format weeks with their daily blocks
-                  const formattedWeeks = weeks.map(week => {
-                    const weekBlocks = dailyBlocks.filter(db => db.week_id === week.id);
-                    const days = {};
-                    weekBlocks.forEach(block => {
-                      if (!days[block.day_of_week]) days[block.day_of_week] = [];
-                      days[block.day_of_week].push({
-                        id: block.block_id,
-                        daily_block_id: block.id,
-                        title: block.title,
-                        description: block.description,
-                        tags: block.tags,
-                        time_slot: block.time_slot
-                      });
-                    });
-                    return { id: week.id, week_number: week.week_number, days };
-                  });
-
-                  return { ...plan, weeks: formattedWeeks };
-                }
-                return { ...plan, weeks: [] };
-              }));
-
-              // If user is logged in, add copyable versions
-              const response = {
-                ...resource,
-                blocks,
-                plans: detailedPlans
-              };
-
-              if (userId) {
-                response.copyableBlocks = blocks.map(block => ({
-                  ...block,
-                  id: undefined,
-                  user_id: undefined,
-                  created_at: undefined
-                }));
-
-                response.copyablePlans = detailedPlans.map(plan => ({
-                  ...plan,
-                  id: undefined,
-                  user_id: undefined,
-                  created_at: undefined,
-                  weeks: plan.weeks.map(week => ({
-                    ...week,
-                    id: undefined,
-                    days: Object.entries(week.days).reduce((acc, [day, blocks]) => {
-                      acc[day] = blocks.map(block => ({
-                        ...block,
-                        id: undefined,
-                        daily_block_id: undefined
-                      }));
-                      return acc;
-                    }, {})
-                  }))
-                }));
-              }
-
-              res.json(response);
-            }
-          );
-        }
-      );
+    // Plans and blocks are already in a format suitable for copying
+    // since they're coming from YAML files
+    if (userId) {
+      response.copyableBlocks = blocks;
+      response.copyablePlans = plans;
     }
-  );
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error loading resource:', error);
+    res.status(500).json({ error: 'Failed to load resource' });
+  }
 });
 
 // Copy a training plan from a resource
@@ -892,89 +826,105 @@ app.post('/api/plans/copy', authenticateUser, async (req, res) => {
       db.run('BEGIN TRANSACTION');
       
       try {
-          // Step 1: Create new training blocks for the user
-          const blockPromises = new Set(); // Use Set to avoid duplicates
-          const uniqueBlocks = new Map(); // Track unique blocks by title
-
+          // Step 1: Get all unique block IDs and load their details from resources
+          const uniqueBlockIds = new Set();
           plan.weeks.forEach(week => {
               Object.values(week.days).forEach(blocks => {
                   blocks.forEach(block => {
-                      // Only create a new block if we haven't seen this title before
-                      if (!uniqueBlocks.has(block.title)) {
-                          uniqueBlocks.set(block.title, block);
-                          blockPromises.add(new Promise((resolve, reject) => {
-                              db.run(
-                                  'INSERT INTO training_blocks (user_id, title, description, tags, is_favorited) VALUES (?, ?, ?, ?, ?)',
-                                  [userId, block.title, block.description, block.tags, 0],
-                                  function(err) {
-                                      if (err) reject(err);
-                                      resolve({
-                                          originalTitle: block.title,
-                                          newId: this.lastID,
-                                          block: {
-                                              id: this.lastID,
-                                              user_id: userId,
-                                              title: block.title,
-                                              description: block.description,
-                                              tags: block.tags,
-                                              is_favorited: 0
-                                          }
-                                      });
-                                  }
-                              );
-                          }));
-                      }
+                      uniqueBlockIds.add(block.blockId);
                   });
               });
           });
 
-          Promise.all(Array.from(blockPromises)).then(createdBlocks => {
-              // Create a mapping of block titles to new block IDs and data
-              const blockMap = new Map(
-                  createdBlocks.map(block => [block.originalTitle, block])
+          // Load block details from resource files
+          const blockPromises = Array.from(uniqueBlockIds).map(async (blockId) => {
+            try {
+                // Get the resource ID from the block path (it's the first part of the path)
+                const [resourceId, blockName] = blockId.split('/');
+                const blockFile = await fs.readFile(
+                    path.join(process.cwd(), 'resources', resourceId, 'blocks', `${blockName}.yaml`),
+                    'utf8'
+                );
+                return yaml.load(blockFile);
+            } catch (error) {
+                throw new Error(`Failed to load block: ${blockId}`);
+            }
+          });
+
+          Promise.all(blockPromises).then(blockDetails => {
+              const blockMap = new Map();
+          
+              // Create new blocks for the user
+              const createBlockPromises = blockDetails.map(block => 
+                  new Promise((resolve, reject) => {
+                      db.run(
+                          'INSERT INTO training_blocks (user_id, title, description, tags, is_favorited) VALUES (?, ?, ?, ?, ?)',
+                          [
+                              userId,
+                              block.title,
+                              block.description,
+                              Array.isArray(block.tags) ? block.tags.join(',') : block.tags,
+                              0
+                          ],
+                          function(err) {
+                              if (err) reject(err);
+                              // Map the original block ID (from YAML) to the new database ID
+                              blockMap.set(block.id, this.lastID);
+                              resolve({
+                                  originalId: block.id,
+                                  newId: this.lastID
+                              });
+                          }
+                      );
+                  })
               );
 
-              // Step 2: Create the new plan
-              db.run(
-                  'INSERT INTO training_plans (user_id, title, tags, is_favorited) VALUES (?, ?, ?, ?)',
-                  [userId, plan.title, plan.tags, 0],
-                  function(err) {
-                      if (err) throw err;
-                      const newPlanId = this.lastID;
+              Promise.all(createBlockPromises).then(() => {
+                  // Create the plan
+                  db.run(
+                      'INSERT INTO training_plans (user_id, title, tags, is_favorited) VALUES (?, ?, ?, ?)',
+                      [userId, plan.title, plan.tags, 0],
+                      function(err) {
+                          if (err) throw err;
+                          const newPlanId = this.lastID;
 
-                      // Step 3: Create weeks and daily blocks
-                      plan.weeks.forEach(week => {
-                          db.run(
-                              'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                              [newPlanId, week.week_number],
-                              function(err) {
-                                  if (err) throw err;
-                                  const newWeekId = this.lastID;
+                          // Create weeks and add blocks
+                          plan.weeks.forEach(week => {
+                              db.run(
+                                  'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+                                  [newPlanId, week.week_number],
+                                  function(err) {
+                                      if (err) throw err;
+                                      const newWeekId = this.lastID;
 
-                                  // Step 4: Create daily blocks
-                                  Object.entries(week.days).forEach(([day, blocks]) => {
-                                      blocks.forEach(block => {
-                                          const newBlock = blockMap.get(block.title);
-                                          if (newBlock) {
-                                              db.run(
-                                                  'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                                                  [newWeekId, day, newBlock.newId, block.time_slot]
-                                              );
-                                          }
-                                      });
-                                  });
-                              }
-                          );
-                      });
+                                      Object.entries(week.days).forEach(([day, blocks]) => {
+                                        blocks.forEach(block => {
+                                            // Extract the original block ID from the full path
+                                            const [_, blockName] = block.blockId.split('/');
+                                            const newBlockId = blockMap.get(blockName);
+                                            if (newBlockId) {
+                                                db.run(
+                                                    'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
+                                                    [newWeekId, day, newBlockId, block.time_slot]
+                                                );
+                                            }
+                                        });
+                                    });
+                                  }
+                              );
+                          });
 
-                      db.run('COMMIT');
-                      res.json({
-                          success: true,
-                          planId: newPlanId,
-                          blocks: Array.from(blockMap.values()).map(b => b.block)
-                      });
-                  }
-              );
+                          db.run('COMMIT');
+                          res.json({
+                              success: true,
+                              planId: newPlanId
+                          });
+                      }
+                  );
+              }).catch(error => {
+                  db.run('ROLLBACK');
+                  throw error;
+              });
           }).catch(error => {
               db.run('ROLLBACK');
               throw error;
