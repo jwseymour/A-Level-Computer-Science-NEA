@@ -134,7 +134,7 @@ const tooltip = d3.select('body').append('div')
         .on('click', (event, d) => {
             const resource = resources.find(r => r.node_id === d.id);
             if (resource) {
-                window.location.href = `/resource-detail.html?id=${resource.id}`;
+                window.location.href = `/resource-detail.html?id=${resource.id}&type=information`;
             }
         });
     }
@@ -143,7 +143,7 @@ const tooltip = d3.select('body').append('div')
 async function loadResources() {
     try {
         console.log('Loading resources...');
-        const response = await fetch('/api/resources');
+        const response = await fetch('/api/resources/information');
         console.log('Response received:', response);
         if (!response.ok) throw new Error('Failed to load resources');
         

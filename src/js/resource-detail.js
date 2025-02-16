@@ -1,6 +1,7 @@
-// Get the resource ID from URL parameters
+// Get the resource ID and type from URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const resourceId = urlParams.get('id');
+const resourceType = urlParams.get('type'); // 'information' or 'training'
 
 // Get DOM elements
 const resourceTitle = document.getElementById('resourceTitle');
@@ -24,11 +25,19 @@ async function loadResource() {
             headers.Authorization = `Bearer ${token}`;
         }
 
-        const response = await fetch(`/api/resources/${resourceId}`, { headers });
+        // Use the appropriate endpoint based on resource type
+        const endpoint = `/api/resources/${resourceType}/${resourceId}`;
+        const response = await fetch(endpoint, { headers });
         if (!response.ok) throw new Error('Failed to load resource');
         
         const resource = await response.json();
         renderResource(resource);
+
+        // Hide training sections for information resources
+        if (resourceType === 'information') {
+            document.querySelector('.training-plans-section').style.display = 'none';
+            document.querySelector('.training-blocks-section').style.display = 'none';
+        }
     } catch (error) {
         console.error('Error loading resource:', error);
     }

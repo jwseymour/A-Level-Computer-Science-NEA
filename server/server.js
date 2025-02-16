@@ -688,7 +688,7 @@ app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
 });
 
 // Get all resources (basic info only)
-app.get('/api/resources', async (req, res) => {
+app.get('/api/resources/information', async (req, res) => {
   try {
       // Load graph data
       const graphPath = path.join(process.cwd(), 'resources', 'graph.yaml');
@@ -743,13 +743,45 @@ app.get('/api/resources', async (req, res) => {
   }
 });
 
-// Get detailed resource information
-app.get('/api/resources/:id', async (req, res) => {
+// Get detailed information resource
+app.get('/api/resources/information/:id', async (req, res) => {
+  const resourceId = req.params.id;
+
+  try {
+    // Load information resource
+    const resourcePath = path.join(process.cwd(), 'resources', 'information', resourceId);
+    
+    // Load main resource data
+    const indexFile = await fs.readFile(path.join(resourcePath, 'index.yaml'), 'utf8');
+    const resource = yaml.load(indexFile);
+
+    // Load content
+    const contentFile = await fs.readFile(path.join(resourcePath, 'content.md'), 'utf8');
+
+    // Format response
+    const response = {
+      id: resource.id,
+      title: resource.title,
+      description: resource.description,
+      content: contentFile,
+      tags: Array.isArray(resource.tags) ? resource.tags.join(',') : resource.tags,
+      created_at: resource.created_at,
+      node_id: resource.node_id
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error loading information resource:', error);
+    res.status(500).json({ error: 'Failed to load information resource' });
+  }
+});
+
+// Get detailed training resource
+app.get('/api/resources/training/:id', async (req, res) => {
   const resourceId = req.params.id;
   const token = req.headers.authorization?.split(' ')[1];
   let userId = null;
 
-  // If token exists, verify it to get user ID
   if (token) {
     try {
       const decoded = jwt.verify(token, SECRET_KEY);
@@ -760,7 +792,7 @@ app.get('/api/resources/:id', async (req, res) => {
   }
 
   try {
-    const resourcePath = path.join(process.cwd(), 'resources', resourceId);
+    const resourcePath = path.join(process.cwd(), 'resources', 'training', resourceId);
     
     // Load main resource data
     const indexFile = await fs.readFile(path.join(resourcePath, 'index.yaml'), 'utf8');
@@ -768,7 +800,6 @@ app.get('/api/resources/:id', async (req, res) => {
 
     // Load content
     const contentFile = await fs.readFile(path.join(resourcePath, 'content.md'), 'utf8');
-    resource.content = contentFile;
 
     // Load blocks
     const blocks = await Promise.all(
@@ -792,12 +823,12 @@ app.get('/api/resources/:id', async (req, res) => {
       })
     );
 
-    // Format response to match existing structure
+    // Format response
     const response = {
       id: resource.id,
       title: resource.title,
       description: resource.description,
-      content: resource.content,
+      content: contentFile,
       tags: Array.isArray(resource.tags) ? resource.tags.join(',') : resource.tags,
       created_at: resource.created_at,
       blocks: blocks.map(block => ({
@@ -815,8 +846,6 @@ app.get('/api/resources/:id', async (req, res) => {
       }))
     };
 
-    // Plans and blocks are already in a format suitable for copying
-    // since they're coming from YAML files
     if (userId) {
       response.copyableBlocks = blocks;
       response.copyablePlans = plans;
@@ -824,8 +853,8 @@ app.get('/api/resources/:id', async (req, res) => {
 
     res.json(response);
   } catch (error) {
-    console.error('Error loading resource:', error);
-    res.status(500).json({ error: 'Failed to load resource' });
+    console.error('Error loading training resource:', error);
+    res.status(500).json({ error: 'Failed to load training resource' });
   }
 });
 
