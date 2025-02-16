@@ -949,116 +949,136 @@ app.post('/api/plans/copy', authenticateUser, async (req, res) => {
   const plan = req.body;
   
   db.serialize(() => {
-      db.run('BEGIN TRANSACTION');
-      
-      try {
-          // Step 1: Get all unique block IDs and load their details from resources
-          const uniqueBlockIds = new Set();
-          plan.weeks.forEach(week => {
-              Object.values(week.days).forEach(blocks => {
-                  blocks.forEach(block => {
-                      uniqueBlockIds.add(block.blockId);
-                  });
-              });
+    db.run('BEGIN TRANSACTION');
+    
+    try {
+      // Step 1: Get all unique block IDs and load their details from resources
+      const uniqueBlockIds = new Set();
+      plan.weeks.forEach(week => {
+        Object.values(week.days).forEach(blocks => {
+          blocks.forEach(block => {
+            uniqueBlockIds.add(block.blockId);
           });
+        });
+      });
 
-          // Load block details from resource files
-          const blockPromises = Array.from(uniqueBlockIds).map(async (blockId) => {
-            try {
-                // Get the resource ID from the block path (it's the first part of the path)
-                const [resourceId, blockName] = blockId.split('/');
-                const blockFile = await fs.readFile(
-                    path.join(process.cwd(), 'resources', resourceId, 'blocks', `${blockName}.yaml`),
-                    'utf8'
-                );
-                return yaml.load(blockFile);
-            } catch (error) {
-                throw new Error(`Failed to load block: ${blockId}`);
-            }
-          });
+      // Load block details from resource files
+      const blockPromises = Array.from(uniqueBlockIds).map(async (blockId) => {
+        try {
+          // Get the resource ID and block ID from the path (format: resourceId/blockId)
+          const [resourceId, blockName] = blockId.split('/');
+          const blockFile = await fs.readFile(
+            path.join(process.cwd(), 'resources', 'training', resourceId, 'blocks', `${blockName}.yaml`),
+            'utf8'
+          );
+          const block = yaml.load(blockFile);
+          return {
+            ...block,
+            originalId: blockId // Keep track of the original resource path
+          };
+        } catch (error) {
+          throw new Error(`Failed to load block: ${blockId}`);
+        }
+      });
 
-          Promise.all(blockPromises).then(blockDetails => {
-              const blockMap = new Map();
-          
-              // Create new blocks for the user
-              const createBlockPromises = blockDetails.map(block => 
-                  new Promise((resolve, reject) => {
-                      db.run(
-                          'INSERT INTO training_blocks (user_id, title, description, tags, is_favorited) VALUES (?, ?, ?, ?, ?)',
-                          [
-                              userId,
-                              block.title,
-                              block.description,
-                              Array.isArray(block.tags) ? block.tags.join(',') : block.tags,
-                              0
-                          ],
-                          function(err) {
-                              if (err) reject(err);
-                              // Map the original block ID (from YAML) to the new database ID
-                              blockMap.set(block.id, this.lastID);
-                              resolve({
-                                  originalId: block.id,
-                                  newId: this.lastID
-                              });
+      Promise.all(blockPromises).then(blockDetails => {
+        const blockMap = new Map();
+        
+        // Create new blocks for the user
+        const createBlockPromises = blockDetails.map(block => 
+          new Promise((resolve, reject) => {
+            db.run(
+              'INSERT INTO training_blocks (user_id, title, description, tags, is_favorited) VALUES (?, ?, ?, ?, ?)',
+              [
+                userId,
+                block.title,
+                block.description,
+                Array.isArray(block.tags) ? block.tags.join(',') : block.tags,
+                0
+              ],
+              function(err) {
+                if (err) reject(err);
+                // Map the original resource path to the new database ID
+                blockMap.set(block.originalId, this.lastID);
+                resolve();
+              }
+            );
+          })
+        );
+
+        Promise.all(createBlockPromises).then(() => {
+          // Create the plan
+          db.run(
+            'INSERT INTO training_plans (user_id, title, tags, is_favorited) VALUES (?, ?, ?, ?)',
+            [userId, plan.title, plan.tags, 0],
+            function(err) {
+              if (err) throw err;
+              const newPlanId = this.lastID;
+
+              // Create weeks and add blocks
+              const weekPromises = plan.weeks.map(week => 
+                new Promise((resolve, reject) => {
+                  db.run(
+                    'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
+                    [newPlanId, week.week_number],
+                    function(err) {
+                      if (err) reject(err);
+                      const newWeekId = this.lastID;
+
+                      // Create daily blocks for this week
+                      const dailyBlockPromises = [];
+                      
+                      Object.entries(week.days).forEach(([day, blocks]) => {
+                        blocks.forEach(block => {
+                          const newBlockId = blockMap.get(block.blockId);
+                          if (newBlockId) {
+                            dailyBlockPromises.push(
+                              new Promise((resolve, reject) => {
+                                db.run(
+                                  'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
+                                  [newWeekId, day, newBlockId, block.time_slot],
+                                  err => err ? reject(err) : resolve()
+                                );
+                              })
+                            );
                           }
-                      );
-                  })
+                        });
+                      });
+
+                      Promise.all(dailyBlockPromises)
+                        .then(() => resolve())
+                        .catch(err => reject(err));
+                    }
+                  );
+                })
               );
 
-              Promise.all(createBlockPromises).then(() => {
-                  // Create the plan
-                  db.run(
-                      'INSERT INTO training_plans (user_id, title, tags, is_favorited) VALUES (?, ?, ?, ?)',
-                      [userId, plan.title, plan.tags, 0],
-                      function(err) {
-                          if (err) throw err;
-                          const newPlanId = this.lastID;
-
-                          // Create weeks and add blocks
-                          plan.weeks.forEach(week => {
-                              db.run(
-                                  'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                                  [newPlanId, week.week_number],
-                                  function(err) {
-                                      if (err) throw err;
-                                      const newWeekId = this.lastID;
-
-                                      Object.entries(week.days).forEach(([day, blocks]) => {
-                                        blocks.forEach(block => {
-                                            // Extract the original block ID from the full path
-                                            const [_, blockName] = block.blockId.split('/');
-                                            const newBlockId = blockMap.get(blockName);
-                                            if (newBlockId) {
-                                                db.run(
-                                                    'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                                                    [newWeekId, day, newBlockId, block.time_slot]
-                                                );
-                                            }
-                                        });
-                                    });
-                                  }
-                              );
-                          });
-
-                          db.run('COMMIT');
-                          res.json({
-                              success: true,
-                              planId: newPlanId
-                          });
-                      }
-                  );
-              }).catch(error => {
+              Promise.all(weekPromises)
+                .then(() => {
+                  db.run('COMMIT');
+                  res.json({
+                    success: true,
+                    planId: newPlanId
+                  });
+                })
+                .catch(error => {
                   db.run('ROLLBACK');
                   throw error;
-              });
-          }).catch(error => {
-              db.run('ROLLBACK');
-              throw error;
-          });
-      } catch (error) {
+                });
+            }
+          );
+        }).catch(error => {
           db.run('ROLLBACK');
-          res.status(400).json({ error: error.message });
-      }
+          throw error;
+        });
+      }).catch(error => {
+        db.run('ROLLBACK');
+        throw error;
+      });
+    } catch (error) {
+      db.run('ROLLBACK');
+      res.status(400).json({ error: error.message });
+    }
   });
 });
 
