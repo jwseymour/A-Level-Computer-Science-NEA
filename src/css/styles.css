@@ -1177,3 +1177,27 @@ button:hover {
     border-radius: 4px;
     background: #f9f9f9;
 }
+
+.training-suggestions {
+    margin-top: 2rem;
+    padding: 1rem;
+}
+
+.suggestion-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.suggestion-card {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+    background: white;
+}
+
+.match-score {
+    color: #2196f3;
+    font-weight: bold;
+}

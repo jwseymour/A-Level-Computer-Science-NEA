@@ -32,123 +32,243 @@ const tooltip = d3.select('body').append('div')
     .attr('class', 'graph-tooltip')
     .style('opacity', 0);
 
-    function renderGraph(graph, resources) {
-        console.log('Graph data:', graph);
-        console.log('Resources:', resources);
+let isPathPlottingMode = false;
+let finishButton = null;
+let selectedPath = [];
+
+// Add toggle button for path plotting mode
+const toggleButton = document.createElement('button');
+toggleButton.className = 'primary-button';
+toggleButton.textContent = 'Plot Training Path';
+toggleButton.onclick = () => {
+    isPathPlottingMode = !isPathPlottingMode;
+    toggleButton.textContent = isPathPlottingMode ? 'Cancel Path' : 'Plot Training Path';
     
-        // Calculate positions based on levels
-        const levelGroups = {};
-        const maxLevel = Math.max(...graph.nodes.map(n => n.level));
-        
-        // Group nodes by level
-        graph.nodes.forEach(node => {
-            if (!levelGroups[node.level]) {
-                levelGroups[node.level] = [];
+    // Reset path and styles regardless of new mode
+    selectedPath = [];
+    resetNodeStyles();
+    suggestionContainer.style.display = 'none';
+    
+    if (isPathPlottingMode) {
+        // Create and show finish button
+        finishButton = document.createElement('button');
+        finishButton.className = 'primary-button';
+        finishButton.textContent = 'Finish Path';
+        finishButton.style.marginLeft = '10px';
+        finishButton.onclick = () => {
+            if (selectedPath.length >= 2) {
+                getSuggestedTrainingPlans(selectedPath);
+                isPathPlottingMode = false;
+                toggleButton.textContent = 'Plot Training Path';
+                finishButton.remove();
+                finishButton = null;
+                setTimeout(() => {
+                    suggestionContainer.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            } else {
+                alert('Please select at least 2 nodes for a path');
             }
-            levelGroups[node.level].push(node);
+        };
+        toggleButton.parentNode.appendChild(finishButton);
+    } else {
+        // Remove finish button
+        if (finishButton) {
+            finishButton.remove();
+            finishButton = null;
+        }
+    }
+};
+document.querySelector('.resources-header').appendChild(toggleButton);
+
+// Add suggestion container
+const suggestionContainer = document.createElement('div');
+suggestionContainer.className = 'training-suggestions';
+suggestionContainer.style.display = 'none';
+document.querySelector('.resources-container').appendChild(suggestionContainer);
+
+function resetNodeStyles() {
+    svg.selectAll('circle')
+        .attr('fill', d => {
+            switch(d.discipline) {
+                case 'indoor-toprope': return '#ffcdd2';
+                case 'indoor-lead': return '#c8e6c9';
+                case 'indoor-boulder': return '#bbdefb';
+                default: return '#fff';
+            }
         });
+}
+
+function renderGraph(graph, resources) {
+    // Calculate positions based on levels
+    const levelGroups = {};
+    const maxLevel = Math.max(...graph.nodes.map(n => n.level));
     
-        // Calculate positions
-        Object.entries(levelGroups).forEach(([level, nodes]) => {
-            const levelY = height - (height * (level / (maxLevel + 1)));
-            const spacing = width / (nodes.length + 1);
+    // Group nodes by level
+    graph.nodes.forEach(node => {
+        if (!levelGroups[node.level]) {
+            levelGroups[node.level] = [];
+        }
+        levelGroups[node.level].push(node);
+    });
+
+    // Calculate positions
+    Object.entries(levelGroups).forEach(([level, nodes]) => {
+        const levelY = height - (height * (level / (maxLevel + 1)));
+        const spacing = width / (nodes.length + 1);
+        
+        nodes.forEach((node, index) => {
+            node.x = spacing * (index + 1);
+            node.y = levelY;
+        });
+    });
+
+    // Draw edges
+    const edges = svg.append('g')
+        .selectAll('line')
+        .data(graph.edges)
+        .enter().append('line')
+        .attr('stroke', '#999')
+        .attr('stroke-width', 1)
+        .attr('marker-end', 'url(#arrowhead)')
+        .attr('x1', d => graph.nodes.find(n => n.id === d.from).x)
+        .attr('y1', d => graph.nodes.find(n => n.id === d.from).y)
+        .attr('x2', d => graph.nodes.find(n => n.id === d.to).x)
+        .attr('y2', d => graph.nodes.find(n => n.id === d.to).y);
+
+    // Draw nodes
+    const nodes = svg.append('g')
+        .selectAll('g')
+        .data(graph.nodes)
+        .enter().append('g')
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+
+    // Rest of the node rendering code remains the same
+    nodes.append('circle')
+        .attr('r', 20)
+        .attr('fill', d => {
+            switch(d.discipline) {
+                case 'indoor-toprope': return '#ffcdd2';
+                case 'indoor-lead': return '#c8e6c9';
+                case 'indoor-boulder': return '#bbdefb';
+                default: return '#fff';
+            }
+        })
+        .attr('stroke', d => {
+            switch(d.level) {
+                case 1: return '#4caf50';
+                case 2: return '#2196f3';
+                case 3: return '#ff9800';
+                case 4: return '#f44336';
+                default: return '#333';
+            }
+        })
+        .attr('stroke-width', 2);
+
+    // Add text labels
+    nodes.append('text')
+        .text(d => {
+            const words = d.title.split(' ');
+            return words.length > 2 ? `${words[0]} ${words[1]}...` : d.title;
+        })
+        .attr('text-anchor', 'middle')
+        .attr('dy', '.35em')
+        .style('font-size', '10px')
+        .style('font-weight', 'bold')
+        .style('fill', '#333');
+
+    // Hover effects remain the same
+    nodes.on('mouseover', (event, d) => {
+        const resource = resources.find(r => r.node_id === d.id);
+        tooltip.transition()
+            .duration(200)
+            .style('opacity', .9);
+        tooltip.html(`
+            <h3>${d.title}</h3>
+            <p>${resource?.description || ''}</p>
+        `)
+            .style('left', (event.pageX + 10) + 'px')
+            .style('top', (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', () => {
+        tooltip.transition()
+            .duration(500)
+            .style('opacity', 0);
+    })
+    .on('click', (event, d) => {
+        if (isPathPlottingMode) {
+            const lastNode = selectedPath[selectedPath.length - 1];
             
-            nodes.forEach((node, index) => {
-                node.x = spacing * (index + 1);
-                node.y = levelY;
-            });
-        });
-    
-        // Draw edges
-        const edges = svg.append('g')
-            .selectAll('line')
-            .data(graph.edges)
-            .enter().append('line')
-            .attr('stroke', '#999')
-            .attr('stroke-width', 1)
-            .attr('marker-end', 'url(#arrowhead)')
-            .attr('x1', d => graph.nodes.find(n => n.id === d.from).x)
-            .attr('y1', d => graph.nodes.find(n => n.id === d.from).y)
-            .attr('x2', d => graph.nodes.find(n => n.id === d.to).x)
-            .attr('y2', d => graph.nodes.find(n => n.id === d.to).y);
-    
-        // Draw nodes
-        const nodes = svg.append('g')
-            .selectAll('g')
-            .data(graph.nodes)
-            .enter().append('g')
-            .attr('transform', d => `translate(${d.x},${d.y})`);
-    
-        // Rest of the node rendering code remains the same
-        nodes.append('circle')
-            .attr('r', 20)
-            .attr('fill', d => {
-                switch(d.discipline) {
-                    case 'indoor-toprope': return '#ffcdd2';
-                    case 'indoor-lead': return '#c8e6c9';
-                    case 'indoor-boulder': return '#bbdefb';
-                    default: return '#fff';
+            // Check if this is a valid next node
+            if (selectedPath.length === 0 || 
+                graph.edges.some(e => e.from === lastNode.id && e.to === d.id)) {
+                
+                if (!selectedPath.includes(d.id)) {
+                    // Find the corresponding resource with related training plans
+                    const resourceData = resources.find(r => r.node_id === d.id);
+                    // Merge node data with resource data
+                    const nodeWithResource = {
+                        ...d,
+                        related_training_plans: resourceData?.related_training_plans || []
+                    };
+                    selectedPath.push(nodeWithResource);  // Store the merged data
+                    d3.select(event.currentTarget).select('circle')
+                        .attr('fill', '#ffd700');
                 }
-            })
-            .attr('stroke', d => {
-                switch(d.level) {
-                    case 1: return '#4caf50';
-                    case 2: return '#2196f3';
-                    case 3: return '#ff9800';
-                    case 4: return '#f44336';
-                    default: return '#333';
-                }
-            })
-            .attr('stroke-width', 2);
-    
-        // Add text labels
-        nodes.append('text')
-            .text(d => {
-                const words = d.title.split(' ');
-                return words.length > 2 ? `${words[0]} ${words[1]}...` : d.title;
-            })
-            .attr('text-anchor', 'middle')
-            .attr('dy', '.35em')
-            .style('font-size', '10px')
-            .style('font-weight', 'bold')
-            .style('fill', '#333');
-    
-        // Hover effects remain the same
-        nodes.on('mouseover', (event, d) => {
-            const resource = resources.find(r => r.node_id === d.id);
-            tooltip.transition()
-                .duration(200)
-                .style('opacity', .9);
-            tooltip.html(`
-                <h3>${d.title}</h3>
-                <p>${resource?.description || ''}</p>
-            `)
-                .style('left', (event.pageX + 10) + 'px')
-                .style('top', (event.pageY - 10) + 'px');
-        })
-        .on('mouseout', () => {
-            tooltip.transition()
-                .duration(500)
-                .style('opacity', 0);
-        })
-        .on('click', (event, d) => {
+            }
+        } else {
             const resource = resources.find(r => r.node_id === d.id);
             if (resource) {
                 window.location.href = `/resource-detail.html?id=${resource.id}&type=information`;
             }
+        }
+    });
+}
+
+async function getSuggestedTrainingPlans(path) {
+    try {
+        const response = await fetch('/api/resources/training/suggest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ path: path })
         });
+        
+        if (!response.ok) throw new Error('Failed to get suggestions');
+        
+        const suggestions = await response.json();
+        displaySuggestions(suggestions);
+    } catch (error) {
+        console.error('Error getting suggestions:', error);
     }
+}
+
+function displaySuggestions(suggestions) {
+    suggestionContainer.style.display = 'block';
+    suggestionContainer.innerHTML = `
+        <h2>Recommended Training Plans</h2>
+        <div class="suggestion-list">
+            ${suggestions.map(plan => `
+                <div class="suggestion-card">
+                    <h3>${plan.title}</h3>
+                    <p>${plan.description}</p>
+                    <p class="match-score">Match Score: ${plan.matchScore}%</p>
+                    <a href="/resource-detail.html?id=${plan.id}&type=training" 
+                       class="primary-button">View Plan</a>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
 
 // Load resources
 async function loadResources() {
     try {
-        console.log('Loading resources...');
         const response = await fetch('/api/resources/information');
-        console.log('Response received:', response);
         if (!response.ok) throw new Error('Failed to load resources');
         
         const data = await response.json();
-        console.log('Parsed data:', data);
+        console.log(data);
         graphData = data.graph;
         allResources = data.resources;
 

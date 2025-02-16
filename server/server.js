@@ -858,6 +858,91 @@ app.get('/api/resources/training/:id', async (req, res) => {
   }
 });
 
+app.post('/api/resources/training/suggest', async (req, res) => {
+  const { path: selectedPath } = req.body;
+  
+  try {
+      // Collect all related training plans from the path nodes
+      const allRelatedPlans = selectedPath.reduce((plans, node) => {
+          if (node.related_training_plans && Array.isArray(node.related_training_plans)) {
+              plans.push(...node.related_training_plans);
+          }
+          return plans;
+      }, []);
+
+      // Count frequency of each training plan
+      const planFrequency = allRelatedPlans.reduce((freq, planId) => {
+          freq[planId] = (freq[planId] || 0) + 1;
+          return freq;
+      }, {});
+
+      // Load training resources
+      const trainingDir = join(process.cwd(), 'resources', 'training');
+      const trainingDirs = await fs.readdir(trainingDir, { withFileTypes: true });
+      
+      const trainingResources = await Promise.all(
+          trainingDirs
+              .filter(dirent => dirent.isDirectory())
+              .map(async (dir) => {
+                  const indexPath = join(trainingDir, dir.name, 'index.yaml');
+                  const content = await fs.readFile(indexPath, 'utf8');
+                  return yaml.load(content);
+              })
+      );
+
+      // Score resources based on frequency and path relevance
+      const scoredResources = trainingResources
+          .filter(resource => resource.target_paths && Array.isArray(resource.target_paths))
+          .map(resource => {
+              const frequency = planFrequency[resource.id] || 0;
+              if (frequency === 0) return null;
+
+              // Find the target path that contains the most selected nodes
+              const bestMatchPath = resource.target_paths.reduce((best, targetPath) => {
+                const selectedNodeIds = selectedPath.map(node => node.id);
+                const matchingNodes = targetPath.nodes.filter(nodeId => 
+                    selectedNodeIds.includes(nodeId)
+                );
+                
+                // Calculate match percentage based on selected path coverage
+                const matchPercentage = (matchingNodes.length / selectedNodeIds.length) * 100;
+                
+                if (matchPercentage > best.matchPercentage) {
+                    return {
+                        matchPercentage,
+                        pathNodes: targetPath.nodes,
+                        relevantNodes: matchingNodes
+                    };
+                }
+                return best;
+              }, { matchPercentage: 0, pathNodes: [], relevantNodes: [] });
+
+              return {
+                id: resource.id,
+                title: resource.title,
+                description: resource.description,
+                frequency,
+                matchScore: Math.round(bestMatchPath.matchPercentage),
+                relevantPathLength: bestMatchPath.pathNodes.length
+              };
+          })
+          .filter(resource => resource !== null);
+
+      // Sort by frequency first, then by relevant path length for equal frequencies
+      scoredResources.sort((a, b) => {
+          if (b.frequency !== a.frequency) {
+              return b.frequency - a.frequency;
+          }
+          return a.relevantPathLength - b.relevantPathLength;
+      });
+
+      res.json(scoredResources);
+  } catch (error) {
+      console.error('Error suggesting training resources:', error);
+      res.status(500).json({ error: 'Failed to suggest training resources' });
+  }
+});
+
 // Copy a training plan from a resource
 app.post('/api/plans/copy', authenticateUser, async (req, res) => {
   const userId = req.user.id;
