@@ -15,6 +15,8 @@ blocks:
   - interval-power-endurance
   - route-pyramid
   - recovery-protocol
+  - core-workout
+  - mobility-work
 
 plans:
   - six-week-endurance
