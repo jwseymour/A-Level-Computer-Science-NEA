@@ -1175,7 +1175,8 @@ button:hover {
     margin: 0 auto;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background: #f9f9f9;
+    background: white;
+    overflow: hidden;
 }
 
 .training-suggestions {
@@ -1200,4 +1201,14 @@ button:hover {
 .match-score {
     color: #2196f3;
     font-weight: bold;
+}
+
+.discipline-regions path {
+    pointer-events: none;
+    transition: opacity 0.3s;
+    -webkit-vector-effect: non-scaling-stroke;
+}
+
+.discipline-regions path:hover {
+    opacity: 0.25;
 }

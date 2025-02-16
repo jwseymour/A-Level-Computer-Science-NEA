@@ -14,6 +14,13 @@ const svg = d3.select('#disciplineGraph')
     .attr('width', width)
     .attr('height', height);
 
+// Create background group for discipline regions
+const backgroundGroup = svg.append('g')
+    .attr('class', 'discipline-regions');
+
+// Create gradient definitions
+const gradientDefs = svg.append('defs');
+
 // Create arrow marker for edges
 svg.append('defs').append('marker')
     .attr('id', 'arrowhead')
@@ -87,15 +94,108 @@ suggestionContainer.style.display = 'none';
 document.querySelector('.resources-container').appendChild(suggestionContainer);
 
 function resetNodeStyles() {
-    svg.selectAll('circle')
-        .attr('fill', d => {
-            switch(d.discipline) {
-                case 'indoor-toprope': return '#ffcdd2';
-                case 'indoor-lead': return '#c8e6c9';
-                case 'indoor-boulder': return '#bbdefb';
-                default: return '#fff';
-            }
+    svg.selectAll('rect')
+        .attr('fill', 'white');
+}
+
+function createDisciplineRegions(nodes) {
+    // Create Voronoi diagram based on node positions
+    const voronoi = d3.Delaunay
+        .from(nodes, d => d.x, d => d.y)
+        .voronoi([0, 0, width, height]);
+
+    // Create a polygon for each node
+    const polygons = nodes.map((_, i) => voronoi.cellPolygon(i));
+
+    // Group polygons by discipline
+    const disciplinePolygons = {};
+    nodes.forEach((node, i) => {
+        if (!disciplinePolygons[node.discipline]) {
+            disciplinePolygons[node.discipline] = [];
+        }
+        if (polygons[i]) {
+            disciplinePolygons[node.discipline].push(polygons[i]);
+        }
+    });
+
+    // For each discipline, create a merged path
+    Object.entries(disciplinePolygons).forEach(([discipline, polygons]) => {
+        // Convert polygons to path strings
+        const pathStrings = polygons.map(polygon => {
+            return `M${polygon.join('L')}Z`;
         });
+
+        // Create merged path
+        backgroundGroup.append('path')
+            .attr('d', pathStrings.join(' '))
+            .attr('class', `discipline-region ${discipline}`)
+            .attr('fill', getBackgroundColor(discipline))
+            .attr('opacity', 0.15)
+            .attr('stroke', getBackgroundColor(discipline))
+            .attr('stroke-width', 2)
+            .attr('stroke-opacity', 0.3);
+    });
+}
+
+function getBackgroundColor(discipline) {
+    switch(discipline) {
+        case 'indoor-toprope': return '#ff5252';
+        case 'indoor-lead': return '#4caf50';
+        case 'indoor-boulder': return '#2196f3';
+        default: return '#fff';
+    }
+}
+
+function createNodeGradient(id, baseColor) {
+    // Create radial gradient for the border
+    const borderGradient = gradientDefs.append('radialGradient')
+        .attr('id', `border-${id}`)
+        .attr('cx', '50%')
+        .attr('cy', '50%')
+        .attr('r', '50%')
+        .attr('gradientUnits', 'userSpaceOnUse');
+        
+    borderGradient.append('stop')
+        .attr('offset', '0%')
+        .attr('stop-color', baseColor)
+        .attr('stop-opacity', 0);
+        
+    borderGradient.append('stop')
+        .attr('offset', '100%')
+        .attr('stop-color', baseColor)
+        .attr('stop-opacity', 0.3);
+}
+
+function wrap(text, width) {
+    text.each(function() {
+        const text = d3.select(this);
+        const words = text.text().split(/\s+/).reverse();
+        const lineHeight = 1.1; // ems
+        const y = text.attr("y");
+        const dy = parseFloat(text.attr("dy") || 0);
+        let word;
+        let line = [];
+        let lineNumber = 0;
+        let tspan = text.text(null).append("tspan")
+            .attr("x", 0)
+            .attr("y", y)
+            .attr("dy", dy + "em");
+
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan")
+                    .attr("x", 0)
+                    .attr("y", y)
+                    .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                    .text(word);
+            }
+        }
+    });
 }
 
 function renderGraph(graph, resources) {
@@ -135,6 +235,14 @@ function renderGraph(graph, resources) {
         .attr('x2', d => graph.nodes.find(n => n.id === d.to).x)
         .attr('y2', d => graph.nodes.find(n => n.id === d.to).y);
 
+    // Create discipline regions
+    createDisciplineRegions(graph.nodes);
+
+    // Create gradients for each discipline
+    createNodeGradient('gradient-toprope', '#ffcdd2');
+    createNodeGradient('gradient-lead', '#c8e6c9');
+    createNodeGradient('gradient-boulder', '#bbdefb');
+
     // Draw nodes
     const nodes = svg.append('g')
         .selectAll('g')
@@ -142,39 +250,48 @@ function renderGraph(graph, resources) {
         .enter().append('g')
         .attr('transform', d => `translate(${d.x},${d.y})`);
 
-    // Rest of the node rendering code remains the same
-    nodes.append('circle')
-        .attr('r', 20)
-        .attr('fill', d => {
-            switch(d.discipline) {
-                case 'indoor-toprope': return '#ffcdd2';
-                case 'indoor-lead': return '#c8e6c9';
-                case 'indoor-boulder': return '#bbdefb';
-                default: return '#fff';
-            }
-        })
-        .attr('stroke', d => {
-            switch(d.level) {
-                case 1: return '#4caf50';
-                case 2: return '#2196f3';
-                case 3: return '#ff9800';
-                case 4: return '#f44336';
-                default: return '#333';
-            }
-        })
-        .attr('stroke-width', 2);
+    // Calculate text size for each node
+    nodes.each(function(d) {
+        const text = d3.select(this).append('text')
+            .text(d.title)
+            .style('font-size', '10px')
+            .style('font-weight', 'bold')
+            .style('width', '120px') // Set max width
+            .call(wrap, 120); // Wrap text function
+            
+        const bbox = text.node().getBBox();
+        d.textWidth = Math.min(bbox.width, 120);
+        d.textHeight = bbox.height;
+        text.remove();
+    });
 
-    // Add text labels
+    // Add background rectangles with gradient
+    nodes.append('rect')
+    .attr('width', d => d.textWidth + 20)
+    .attr('height', d => d.textHeight + 10)
+    .attr('x', d => -(d.textWidth + 20) / 2)
+    .attr('y', d => -(d.textHeight + 10) / 2)
+    .attr('rx', 5)
+    .attr('ry', 5)
+    .attr('fill', 'white')
+    .attr('stroke', d => {
+        switch(d.discipline) {
+            case 'indoor-toprope': return 'url(#border-gradient-toprope)';
+            case 'indoor-lead': return 'url(#border-gradient-lead)';
+            case 'indoor-boulder': return 'url(#border-gradient-boulder)';
+            default: return '#33333333';
+        }
+    })
+    .attr('stroke-width', 4);
+
+    // Add text labels with wrapping
     nodes.append('text')
-        .text(d => {
-            const words = d.title.split(' ');
-            return words.length > 2 ? `${words[0]} ${words[1]}...` : d.title;
-        })
+        .text(d => d.title)
         .attr('text-anchor', 'middle')
-        .attr('dy', '.35em')
         .style('font-size', '10px')
         .style('font-weight', 'bold')
-        .style('fill', '#333');
+        .style('fill', '#333')
+        .call(wrap, 120);
 
     // Hover effects remain the same
     nodes.on('mouseover', (event, d) => {
@@ -211,8 +328,8 @@ function renderGraph(graph, resources) {
                         related_training_plans: resourceData?.related_training_plans || []
                     };
                     selectedPath.push(nodeWithResource);  // Store the merged data
-                    d3.select(event.currentTarget).select('circle')
-                        .attr('fill', '#ffd700');
+                    d3.select(event.currentTarget).select('rect')
+                        .attr('fill', '#bcbcbc');
                 }
             }
         } else {
@@ -268,7 +385,6 @@ async function loadResources() {
         if (!response.ok) throw new Error('Failed to load resources');
         
         const data = await response.json();
-        console.log(data);
         graphData = data.graph;
         allResources = data.resources;
 
