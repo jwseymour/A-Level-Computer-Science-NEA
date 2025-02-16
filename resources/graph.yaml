@@ -1,0 +1,76 @@
+# Defines the climbing discipline graph structure
+nodes:
+  # Indoor Top Rope Progression
+  - id: indoor-toprope-basics
+    title: "Indoor Top Rope Fundamentals"
+    level: 1
+    discipline: "indoor-toprope"
+    
+  - id: indoor-toprope-intermediate
+    title: "Indoor Top Rope Movement"
+    level: 2
+    discipline: "indoor-toprope"
+    
+  - id: indoor-toprope-advanced
+    title: "Advanced Top Rope Techniques"
+    level: 3
+    discipline: "indoor-toprope"
+
+  # Indoor Lead Progression
+  - id: indoor-lead-basics
+    title: "Indoor Lead Climbing Fundamentals"
+    level: 2
+    discipline: "indoor-lead"
+    
+  - id: indoor-lead-intermediate
+    title: "Indoor Lead Movement & Efficiency"
+    level: 3
+    discipline: "indoor-lead"
+    
+  - id: indoor-lead-advanced
+    title: "Advanced Indoor Lead Techniques"
+    level: 4
+    discipline: "indoor-lead"
+
+  # Bouldering Progression
+  - id: indoor-boulder-basics
+    title: "Indoor Bouldering Fundamentals"
+    level: 1
+    discipline: "indoor-boulder"
+    
+  - id: indoor-boulder-intermediate
+    title: "Indoor Bouldering Movement"
+    level: 2
+    discipline: "indoor-boulder"
+    
+  - id: indoor-boulder-advanced
+    title: "Advanced Bouldering Techniques"
+    level: 3
+    discipline: "indoor-boulder"
+
+edges:
+  # Top Rope Progression
+  - from: indoor-toprope-basics
+    to: indoor-toprope-intermediate
+  - from: indoor-toprope-intermediate
+    to: indoor-toprope-advanced
+    
+  # Lead Progression
+  - from: indoor-toprope-intermediate
+    to: indoor-lead-basics
+  - from: indoor-lead-basics
+    to: indoor-lead-intermediate
+  - from: indoor-lead-intermediate
+    to: indoor-lead-advanced
+    
+  # Bouldering Progression
+  - from: indoor-boulder-basics
+    to: indoor-boulder-intermediate
+  - from: indoor-boulder-intermediate
+    to: indoor-boulder-advanced
+    
+  # Cross-discipline connections
+  - from: indoor-boulder-basics
+    to: indoor-toprope-basics
+  - from: indoor-boulder-intermediate
+    to: indoor-lead-basics

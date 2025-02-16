@@ -5,8 +5,7 @@
     "type": "module",
     "scripts": {
         "start": "node server/server.js",
-        "create-resource": "node scripts/create-resource.js",
-        "remove-resource": "node scripts/remove-resource.js"
+        "create-resource": "node scripts/create-resource.js"
     },
     "keywords": [],
     "author": "Your Name",

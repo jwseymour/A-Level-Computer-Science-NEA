@@ -1,395 +1,283 @@
-import sqlite3 from 'sqlite3';
+import fs from 'fs/promises';
+import path from 'path';
+import yaml from 'js-yaml';
 
-const db = new sqlite3.Database('./src/db/users.db');
+async function createInfoResources() {
+    try {
+        // Read the graph.yaml file
+        const graphContent = await fs.readFile(
+            path.join(process.cwd(), 'resources', 'graph.yaml'),
+            'utf8'
+        );
+        const graph = yaml.load(graphContent);
 
-// Resource content in MDX format
-const resourceContent = `
-# 6-Week Sport Climbing Endurance Program
+        // Get existing resources
+        const infoDir = path.join(process.cwd(), 'resources', 'information');
+        const existingResources = await fs.readdir(infoDir);
+
+        // Process each node from the graph
+        for (const node of graph.nodes) {
+            if (!existingResources.includes(node.id)) {
+                await createResourceForNode(node);
+            }
+        }
+
+        console.log('Information resources created successfully!');
+    } catch (error) {
+        console.error('Error creating resources:', error);
+    }
+}
+
+async function createResourceForNode(node) {
+    const resourceDir = path.join(
+        process.cwd(),
+        'resources',
+        'information',
+        node.id
+    );
+
+    // Create resource directory
+    await fs.mkdir(resourceDir, { recursive: true });
+
+    // Create index.yaml
+    const indexContent = {
+        id: node.id,
+        title: node.title,
+        description: generateDescription(node),
+        tags: generateTags(node),
+        created_at: new Date().toISOString().split('T')[0],
+        node_id: node.id
+    };
+
+    await fs.writeFile(
+        path.join(resourceDir, 'index.yaml'),
+        yaml.dump(indexContent)
+    );
+
+    // Create content.md
+    await fs.writeFile(
+        path.join(resourceDir, 'content.md'),
+        generateContent(node)
+    );
+}
+
+function generateDescription(node) {
+    const levelTexts = {
+        1: "beginner-friendly introduction",
+        2: "intermediate-level guide",
+        3: "advanced exploration",
+        4: "expert-level deep dive"
+    };
+
+    return `A comprehensive ${levelTexts[node.level]} to ${node.title.toLowerCase()}, covering essential techniques, safety considerations, and best practices.`;
+}
+
+function generateTags(node) {
+    const tags = [
+        node.discipline,
+        `level-${node.level}`,
+        ...node.discipline.split('-')
+    ];
+
+    const levelTags = {
+        1: ['beginner', 'fundamentals', 'basics'],
+        2: ['intermediate', 'progression'],
+        3: ['advanced', 'technical'],
+        4: ['expert', 'mastery']
+    };
+
+    return [...new Set([...tags, ...levelTags[node.level]])];
+}
+
+function generateContent(node) {
+    const levelContent = {
+        1: generateBeginnerContent(node),
+        2: generateIntermediateContent(node),
+        3: generateAdvancedContent(node),
+        4: generateExpertContent(node)
+    };
+
+    return levelContent[node.level];
+}
+
+function generateBeginnerContent(node) {
+    return `# ${node.title}
 
 ## Overview
-This program focuses on building climbing endurance for sport routes, targeting climbers who want to improve their stamina on longer routes.
+An introduction to ${node.title.toLowerCase()}, focusing on building a strong foundation in the fundamentals of ${node.discipline.replace('-', ' ')}.
 
-## Program Goals
-- Increase forearm endurance
-- Improve recovery between clips
-- Build aerobic capacity
-- Develop mental stamina
-- Perfect rest positions
+## Key Learning Objectives
+- Understanding basic safety protocols and equipment
+- Learning proper body positioning and movement
+- Developing fundamental technique
+- Building confidence on the wall
 
-## Weekly Structure
-- 3 climbing sessions
-- 2 cardio/antagonist sessions
-- 2 rest days
+## Safety Fundamentals
+- Equipment checks and proper usage
+- Communication protocols
+- Basic risk assessment
+- Emergency procedures
 
-## Training Methods
-1. ARC Training (Aerobic Restoration and Capillarity)
-   - 20-30 minute continuous climbing
-   - Focus on efficient movement
-   - Stay below pump threshold
+## Essential Techniques
+- Body positioning
+- Footwork basics
+- Hand holds and grips
+- Movement patterns
+- Balance and weight distribution
 
-2. Interval Training
-   - 4x4 minute on-wall intervals
-   - 1:1 work/rest ratio
-   - Progressive difficulty increase
-
-3. Pyramid Sessions
-   - Start easy, build up, then down
-   - Example: 5.9, 5.10a, 5.10c, 5.11a, 5.10c, 5.10a, 5.9
-   - Focus on perfect form
-
-## Recovery Strategies
-- Light stretching
-- Proper hydration
-- Protein timing
-- Sleep optimization
+## Common Mistakes to Avoid
+- Overgripping
+- Poor footwork
+- Incorrect body positioning
+- Rushing movements
 
 ## Progress Markers
-- Route grades at flash level
-- Time spent on continuous climbing
-- Recovery speed between burns
-- Number of routes per session
-`;
+- Consistent safety checks
+- Proper technique execution
+- Movement confidence
+- Basic problem-solving skills
 
-const resource = {
-    title: "Sport Climbing Endurance Builder",
-    description: "A 6-week program designed to improve climbing endurance and stamina for sport routes.",
-    content: resourceContent,
-    tags: "sport climbing,endurance,stamina,training plan,ARC"
-};
+## Next Steps
+Once you're comfortable with these fundamentals, you can progress to more advanced techniques and challenging routes.`;
+}
 
-const blocks = [
-    {
-        title: "ARC Training Session",
-        description: "Low-intensity, long-duration climbing for capillarity development",
-        tags: "endurance,ARC,technique",
-        is_favorited: 0
-    },
-    {
-        title: "Interval Power Endurance",
-        description: "4x4 minute climbing intervals with structured rest",
-        tags: "intervals,power endurance,structured",
-        is_favorited: 0
-    },
-    {
-        title: "Route Pyramid Session",
-        description: "Progressive grade pyramid for endurance building",
-        tags: "pyramid,endurance,progression",
-        is_favorited: 0
-    },
-    {
-        title: "Recovery Protocol",
-        description: "Active recovery and mobility work",
-        tags: "recovery,mobility,maintenance",
-        is_favorited: 0
-    }
-];
+function generateIntermediateContent(node) {
+    return `# ${node.title}
 
-const plan = {
-    title: "6-Week Endurance Program",
-    tags: "endurance,sport climbing,structured",
-    is_favorited: 0,
-    weeks: [
-        {
-            week_number: 1,
-            days: {
-                1: [{ 
-                    id: null,
-                    title: "ARC Training Session",
-                    time_slot: "18:00" 
-                }],
-                3: [{ 
-                    id: null,
-                    title: "Interval Power Endurance",
-                    time_slot: "18:00" 
-                }],
-                5: [{ 
-                    id: null,
-                    title: "Route Pyramid Session",
-                    time_slot: "18:00" 
-                }]
-            }
-        },
-        {
-            week_number: 2,
-            days: {
-                2: [{ 
-                    id: null,
-                    title: "ARC Training Session",
-                    time_slot: "18:00" 
-                }],
-                4: [{ 
-                    id: null,
-                    title: "Interval Power Endurance",
-                    time_slot: "18:00" 
-                }],
-                6: [{ 
-                    id: null,
-                    title: "Recovery Protocol",
-                    time_slot: "10:00" 
-                }]
-            }
-        }
-    ]
-};
+## Overview
+Building on fundamental skills, this guide focuses on refining technique and developing efficiency in ${node.discipline.replace('-', ' ')}.
 
-// Modified database insertion code
-db.serialize(() => {
-    // First create resource and blocks as before...
-    db.run(
-        'INSERT INTO resources (title, description, content, tags) VALUES (?, ?, ?, ?)',
-        [resource.title, resource.description, resource.content, resource.tags],
-        function(err) {
-            if (err) {
-                console.error('Error creating resource:', err);
-                return;
-            }
-            const resourceId = this.lastID;
-            console.log('Resource created with ID:', resourceId);
+## Advanced Techniques
+- Dynamic movement
+- Route reading strategies
+- Energy conservation
+- Advanced footwork
+- Body tension
 
-            // Create blocks and store their IDs
-            const blockPromises = blocks.map(block => {
-                return new Promise((resolve, reject) => {
-                    db.run(
-                        'INSERT INTO training_blocks (title, description, tags, is_favorited) VALUES (?, ?, ?, ?)',
-                        [block.title, block.description, block.tags, block.is_favorited],
-                        function(err) {
-                            if (err) reject(err);
-                            const blockId = this.lastID;
-                            
-                            // Link block to resource
-                            db.run(
-                                'INSERT INTO resource_blocks (resource_id, block_id) VALUES (?, ?)',
-                                [resourceId, blockId]
-                            );
-                            
-                            resolve({ title: block.title, id: blockId });
-                        }
-                    );
-                });
-            });
+## Movement Efficiency
+- Momentum utilization
+- Rest positions
+- Breathing techniques
+- Sequence optimization
 
-            // After blocks are created, create the plan
-            Promise.all(blockPromises).then(createdBlocks => {
-                // Create training plan
-                db.run(
-                    'INSERT INTO training_plans (title, tags, is_favorited) VALUES (?, ?, ?)',
-                    [plan.title, plan.tags, plan.is_favorited],
-                    function(err) {
-                        if (err) {
-                            console.error('Error creating plan:', err);
-                            return;
-                        }
-                        const planId = this.lastID;
+## Mental Training
+- Focus techniques
+- Stress management
+- Visualization practices
+- Performance preparation
 
-                        // Link plan to resource
-                        db.run(
-                            'INSERT INTO resource_plans (resource_id, plan_id) VALUES (?, ?)',
-                            [resourceId, planId]
-                        );
+## Training Concepts
+- Strength development
+- Endurance building
+- Flexibility requirements
+- Recovery strategies
 
-                        // Create weeks and add blocks to days
-                        plan.weeks.forEach(week => {
-                            db.run(
-                                'INSERT INTO plan_weeks (plan_id, week_number) VALUES (?, ?)',
-                                [planId, week.week_number],
-                                function(err) {
-                                    if (err) {
-                                        console.error('Error creating week:', err);
-                                        return;
-                                    }
-                                    const weekId = this.lastID;
+## Common Challenges
+- Plateau breaking
+- Technical barriers
+- Mental blocks
+- Physical limitations
 
-                                    // Add blocks to days
-                                    Object.entries(week.days).forEach(([day, dayBlocks]) => {
-                                        dayBlocks.forEach(blockData => {
-                                            const block = createdBlocks.find(b => b.title === blockData.title);
-                                            if (block) {
-                                                db.run(
-                                                    'INSERT INTO daily_blocks (week_id, day_of_week, block_id, time_slot) VALUES (?, ?, ?, ?)',
-                                                    [weekId, day, block.id, blockData.time_slot]
-                                                );
-                                            }
-                                        });
-                                    });
-                                }
-                            );
-                        });
-                    }
-                );
-            });
+## Progress Assessment
+- Movement quality
+- Technical precision
+- Problem-solving ability
+- Physical conditioning`;
+}
 
-            // Close database connection after all operations are complete
-            setTimeout(() => db.close(), 2000);
-        }
-    );
-});
+function generateAdvancedContent(node) {
+    return `# ${node.title}
 
-// import sqlite3 from 'sqlite3';
+## Overview
+Advanced-level instruction focusing on mastery of complex techniques and sophisticated movement patterns in ${node.discipline.replace('-', ' ')}.
 
-// // Connect to database
-// const db = new sqlite3.Database('./src/db/users.db');
+## Advanced Concepts
+- Complex movement patterns
+- Advanced route reading
+- Energy system optimization
+- Performance psychology
+- Training periodization
 
-// // Resource content in MDX format
-// const resourceContent = `
-// # Complete Climbing Training Guide
+## Technical Mastery
+- Subtle body positioning
+- Advanced sequence optimization
+- Specialized techniques
+- Power application
+- Technical problem-solving
 
-// ## Introduction
-// This comprehensive guide covers essential training principles for rock climbing, focusing on developing strength, technique, and mental resilience. Whether you're a beginner or an advanced climber, these principles will help you progress systematically.
+## Performance Optimization
+- Mental preparation
+- Competition strategies
+- Peak performance timing
+- Recovery optimization
+- Injury prevention
 
-// ## Key Training Areas
+## Training Integration
+- Periodization strategies
+- Performance analysis
+- Weakness identification
+- Targeted improvement
 
-// ### 1. Finger Strength
-// Finger strength is crucial for climbing success. However, it's important to progress gradually to prevent injury.
+## Expert Considerations
+- Risk management
+- Training load balance
+- Long-term progression
+- Sustainable development
 
-// #### Training Methods:
-// - Hangboard protocols
-//   * Beginner: 7/3 repeaters on large edges
-//   * Intermediate: Max hangs on smaller edges
-//   * Advanced: One-arm hangs and minimal edge training
-// - Campus board basics
-// - No-hang device training
+## Mastery Indicators
+- Technical excellence
+- Movement efficiency
+- Mental resilience
+- Performance consistency`;
+}
 
-// ### 2. Core Stability
-// A strong core is essential for maintaining body tension on overhanging routes.
+function generateExpertContent(node) {
+    return `# ${node.title}
 
-// #### Key Exercises:
-// - Front levers (progressions)
-// - Dragon flags
-// - Ab wheel rollouts
-// - Hanging leg raises
-// - Plank variations
+## Overview
+Expert-level guidance for mastering the most complex aspects of ${node.discipline.replace('-', ' ')}, focusing on performance optimization and technical excellence.
 
-// ### 3. Pull Strength
-// While climbing itself builds pulling strength, supplementary training can accelerate progress.
+## Elite Techniques
+- Complex movement systems
+- Advanced problem-solving
+- Performance optimization
+- Technical innovation
+- Strategic mastery
 
-// #### Exercises:
-// - Pull-ups (weighted when possible)
-// - Lock-offs at various angles
-// - Typewriters
-// - Assisted one-arm training
+## Performance Psychology
+- Elite mindset development
+- Pressure management
+- Competition psychology
+- Mental toughness
+- Flow state access
 
-// ### 4. Movement Technique
-// Technique is often more important than pure strength.
+## Training Systems
+- Advanced periodization
+- Performance analysis
+- Recovery optimization
+- Injury prevention
+- Long-term development
 
-// #### Focus Areas:
-// - Silent feet drills
-// - Hip positioning
-// - Flag positions
-// - Dynamic movement
-// - Rest positions
+## Technical Excellence
+- Movement efficiency
+- Energy system optimization
+- Technical precision
+- Strategic thinking
+- Innovation in technique
 
-// ### 5. Mental Training
-// The mental aspect of climbing is crucial for performing at your limit.
+## Mastery Development
+- Continuous improvement
+- Knowledge integration
+- Teaching capability
+- Community leadership
+- Sport contribution
 
-// #### Key Aspects:
-// - Visualization techniques
-// - Breathing exercises
-// - Fear management
-// - Route reading skills
-// - Performance preparation
+## Legacy Building
+- Technique development
+- Knowledge sharing
+- Community impact
+- Sport advancement
+- Personal growth`;
+}
 
-// ## Training Schedule
-// - 3-4 climbing sessions per week
-// - 2-3 supplementary training sessions
-// - 1-2 complete rest days
-// - Alternate between power and endurance focus
-
-// ## Recovery Tips
-// 1. Get adequate sleep (8+ hours)
-// 2. Stay hydrated
-// 3. Focus on nutrition
-// 4. Use active recovery techniques
-// 5. Listen to your body
-
-// ## Progress Tracking
-// - Keep a training log
-// - Document max grades
-// - Track hangboard numbers
-// - Film yourself climbing
-// - Review and adjust every 6-8 weeks
-// `;
-
-// // Resource data
-// const resource = {
-//     title: "Complete Climbing Training Guide",
-//     description: "A comprehensive guide to climbing training, covering strength, technique, mental training, and structured progression plans.",
-//     content: resourceContent,
-//     tags: "climbing,training,strength,technique,mental training,fingerboard,core training"
-// };
-
-// // Training blocks data
-// const blocks = [
-//     {
-//         title: "Fingerboard Strength Protocol",
-//         description: "Progressive hangboard training for systematic finger strength development",
-//         tags: "fingerboard,strength,hangboard",
-//         is_favorited: 0
-//     },
-//     {
-//         title: "Core Power Circuit",
-//         description: "Intensive core workout focusing on climbing-specific movements",
-//         tags: "core,strength,power",
-//         is_favorited: 0
-//     },
-//     {
-//         title: "Movement Skills Session",
-//         description: "Technique drills focusing on precise footwork and body positioning",
-//         tags: "technique,skills,movement",
-//         is_favorited: 0
-//     },
-//     {
-//         title: "Mental Training Workshop",
-//         description: "Exercises for developing mental resilience and focus while climbing",
-//         tags: "mental,focus,visualization",
-//         is_favorited: 0
-//     }
-// ];
-
-// // Insert the resource and blocks
-// db.serialize(() => {
-//     // Insert resource
-//     db.run(
-//         'INSERT INTO resources (title, description, content, tags) VALUES (?, ?, ?, ?)',
-//         [resource.title, resource.description, resource.content, resource.tags],
-//         function(err) {
-//             if (err) {
-//                 console.error('Error creating resource:', err);
-//                 return;
-//             }
-//             const resourceId = this.lastID;
-//             console.log('Resource created with ID:', resourceId);
-
-//             // Insert all training blocks
-//             blocks.forEach(block => {
-//                 db.run(
-//                     'INSERT INTO training_blocks (title, description, tags, is_favorited) VALUES (?, ?, ?, ?)',
-//                     [block.title, block.description, block.tags, block.is_favorited],
-//                     function(err) {
-//                         if (err) {
-//                             console.error('Error creating block:', err);
-//                             return;
-//                         }
-//                         const blockId = this.lastID;
-//                         console.log(`Block "${block.title}" created with ID:`, blockId);
-
-//                         // Link block to resource
-//                         db.run(
-//                             'INSERT INTO resource_blocks (resource_id, block_id) VALUES (?, ?)',
-//                             [resourceId, blockId],
-//                             function(err) {
-//                                 if (err) {
-//                                     console.error('Error linking block to resource:', err);
-//                                     return;
-//                                 }
-//                                 console.log(`Block ${blockId} linked to resource ${resourceId}`);
-//                             }
-//                         );
-//                     }
-//                 );
-//             });
-
-//             // Close database connection after all operations are complete
-//             setTimeout(() => db.close(), 1000);
-//         }
-//     );
-// });
+createInfoResources();
