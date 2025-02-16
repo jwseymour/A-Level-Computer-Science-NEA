@@ -1,0 +1,24 @@
+id: boulder-power
+title: "Bouldering Power Development"
+description: "A 4-week program focused on developing explosive power and dynamic movement for bouldering."
+tags: 
+  - bouldering
+  - power
+  - strength
+  - training plan
+  - campus
+created_at: "2024-03-20"
+
+target_paths:
+  - nodes: 
+      - indoor-boulder-basics
+      - indoor-boulder-intermediate
+      - indoor-boulder-advanced
+
+blocks:
+  - campus-basics
+  - power-drills
+  - recovery-protocol
+
+plans:
+  - four-week-power

@@ -12,3 +12,5 @@ tags:
   - technical
 created_at: '2025-02-16'
 node_id: indoor-boulder-advanced
+related_training_plans:
+  - boulder-power

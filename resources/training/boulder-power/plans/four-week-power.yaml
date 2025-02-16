@@ -1,0 +1,22 @@
+id: four-week-power
+title: "4-Week Power Development"
+tags:
+  - power
+  - campus
+  - strength
+is_favorited: false
+
+weeks:
+  - week_number: 1
+    days:
+      1:  # Monday
+        - block: power-drills
+          time_slot: "18:00"
+        - block: recovery-protocol
+          time_slot: "19:30"
+      3:  # Wednesday
+        - block: campus-basics
+          time_slot: "18:00"
+      5:  # Friday
+        - block: power-drills
+          time_slot: "18:00"
