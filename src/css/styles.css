@@ -1142,3 +1142,38 @@ button:hover {
         padding: 1.5rem;
     }
 }
+
+.graph-tooltip {
+    position: absolute;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    max-width: 200px;
+}
+
+.graph-tooltip h3 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+}
+
+.graph-tooltip p {
+    margin: 0 0 5px 0;
+    font-size: 12px;
+}
+
+.graph-tooltip .tags {
+    font-size: 11px;
+    color: #666;
+}
+
+#disciplineGraph {
+    width: 800px;
+    height: 600px;
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}

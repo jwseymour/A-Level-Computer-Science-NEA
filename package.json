@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "start": "node server/server.js",
-        "create-resource": "node scripts/create-resource.js"
+        "sync-resource": "node scripts/sync-training-relationships.js"
     },
     "keywords": [],
     "author": "Your Name",

@@ -690,44 +690,56 @@ app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
 // Get all resources (basic info only)
 app.get('/api/resources', async (req, res) => {
   try {
-    const resourcesDir = path.join(process.cwd(), 'resources');
-    const directories = await fs.readdir(resourcesDir, { withFileTypes: true });
-    
-    // Get only directories
-    const resourceDirs = directories.filter(dirent => dirent.isDirectory());
-    
-    // Read each resource's index.yaml
-    const resources = await Promise.all(
-      resourceDirs.map(async (dir) => {
-        const indexPath = path.join(resourcesDir, dir.name, 'index.yaml');
-        try {
-          const fileContent = await fs.readFile(indexPath, 'utf8');
-          const resource = yaml.load(fileContent);
-          
-          // Match the existing API response structure
-          return {
-            id: resource.id,
-            title: resource.title,
-            description: resource.description,
-            tags: Array.isArray(resource.tags) ? resource.tags.join(',') : resource.tags,
-            created_at: resource.created_at
-          };
-        } catch (err) {
-          console.error(`Error reading resource ${dir.name}:`, err);
-          return null;
-        }
-      })
-    );
+      // Load graph data
+      const graphPath = path.join(process.cwd(), 'resources', 'graph.yaml');
+      const graphContent = await fs.readFile(graphPath, 'utf8');
+      const graph = yaml.load(graphContent);
 
-    // Filter out any failed reads and sort by created_at
-    const validResources = resources
-      .filter(r => r !== null)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      // Load information resources
+      const infoDir = path.join(process.cwd(), 'resources', 'information');
+      const infoDirs = await fs.readdir(infoDir, { withFileTypes: true });
+      
+      // Get only directories
+      const resourceDirs = infoDirs.filter(dirent => dirent.isDirectory());
+      
+      // Read each resource's index.yaml
+      const resources = await Promise.all(
+          resourceDirs.map(async (dir) => {
+              const indexPath = path.join(infoDir, dir.name, 'index.yaml');
+              try {
+                  const fileContent = await fs.readFile(indexPath, 'utf8');
+                  const resource = yaml.load(fileContent);
+                  
+                  // Return formatted resource data
+                  return {
+                      id: resource.id,
+                      title: resource.title,
+                      description: resource.description,
+                      tags: Array.isArray(resource.tags) ? resource.tags.join(',') : resource.tags,
+                      created_at: resource.created_at,
+                      node_id: resource.node_id,
+                      related_training_plans: resource.related_training_plans || []
+                  };
+              } catch (err) {
+                  console.error(`Error reading resource ${dir.name}:`, err);
+                  return null;
+              }
+          })
+      );
 
-    res.json(validResources);
+      // Filter out any failed reads and sort by created_at
+      const validResources = resources
+          .filter(r => r !== null)
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Return combined data
+      res.json({
+          graph,
+          resources: validResources
+      });
   } catch (error) {
-    console.error('Error loading resources:', error);
-    res.status(500).json({ error: 'Failed to load resources' });
+      console.error('Error loading resources:', error);
+      res.status(500).json({ error: 'Failed to load resources' });
   }
 });
 
