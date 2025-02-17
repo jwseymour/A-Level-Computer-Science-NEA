@@ -1,0 +1,27 @@
+id: lead-transition
+title: Top Rope to Lead Transition Program
+description: >-
+  A structured 4-week program designed to transition climbers from top rope to
+  lead climbing, focusing on safety systems, clipping technique, and mental
+  preparation.
+tags:
+  - indoor
+  - lead
+  - safety
+  - technique
+  - mental
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - indoor-toprope-intermediate
+      - indoor-lead-beginner
+      - indoor-lead-intermediate
+blocks:
+  - lead-safety
+  - clipping-technique
+  - mental-preparation
+  - fall-practice
+  - route-strategy
+plans:
+  - four-week-lead

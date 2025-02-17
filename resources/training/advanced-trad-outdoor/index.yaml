@@ -1,0 +1,26 @@
+id: advanced-trad-outdoor
+title: Advanced Traditional Climbing Development
+description: >-
+  An intensive 12-week program designed for intermediate trad climbers looking
+  to push into advanced grades, focusing on complex protection strategies,
+  multi-pitch efficiency, and advanced route finding.
+tags:
+  - trad
+  - outdoor
+  - advanced
+  - technical
+  - alpine
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - outdoor-trad-intermediate
+      - outdoor-trad-advanced
+blocks:
+  - advanced-protection
+  - complex-anchors
+  - alpine-skills
+  - route-strategy
+  - rescue-systems
+plans:
+  - twelve-week-advanced

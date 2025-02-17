@@ -1,7 +1,8 @@
 id: outdoor-boulder-intermediate
 title: Intermediate Outdoor Boulder
 description: >-
-  Advancing outdoor bouldering skills with focus on complex movements, project management, and environmental awareness.
+  Advancing outdoor bouldering skills with focus on complex movements, project
+  management, and environmental awareness.
 tags:
   - outdoor-boulder
   - level-3
@@ -11,4 +12,6 @@ tags:
   - technical
 created_at: '2024-03-21'
 node_id: outdoor-boulder-intermediate
-related_training_plans: []
+related_training_plans:
+  - outdoor-boulder-transition
+  - advanced-boulder-outdoor

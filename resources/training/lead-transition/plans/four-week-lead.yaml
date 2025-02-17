@@ -1,0 +1,24 @@
+id: four-week-lead
+title: 4-Week Lead Climbing Introduction
+tags:
+  - lead
+  - safety
+  - technique
+  - mental
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: lead-safety
+          time_slot: '17:00'
+        - block: clipping-technique
+          time_slot: '18:30'
+      '3':
+        - block: mental-preparation
+          time_slot: '17:00'
+      '5':
+        - block: fall-practice
+          time_slot: '17:00'
+        - block: route-strategy
+          time_slot: '18:30'

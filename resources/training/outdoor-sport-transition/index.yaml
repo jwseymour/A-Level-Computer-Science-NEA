@@ -1,0 +1,27 @@
+id: outdoor-sport-transition
+title: Indoor to Outdoor Sport Transition
+description: >-
+  A comprehensive 6-week program designed to transition indoor lead climbers to
+  outdoor sport climbing, focusing on outdoor safety, route assessment, and
+  environmental awareness.
+tags:
+  - sport
+  - outdoor
+  - safety
+  - technical
+  - environmental
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - indoor-lead-intermediate
+      - outdoor-sport-beginner
+      - outdoor-sport-intermediate
+blocks:
+  - outdoor-safety
+  - route-assessment
+  - anchor-management
+  - environmental-awareness
+  - redpoint-tactics
+plans:
+  - six-week-sport

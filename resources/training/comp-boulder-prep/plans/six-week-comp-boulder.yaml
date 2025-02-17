@@ -1,0 +1,24 @@
+id: six-week-comp-boulder
+title: 6-Week Competition Boulder Preparation
+tags:
+  - competition
+  - boulder
+  - preparation
+  - power
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: comp-movement-patterns
+          time_slot: '17:00'
+        - block: mental-tactics
+          time_slot: '19:00'
+      '3':
+        - block: power-endurance
+          time_slot: '17:00'
+      '5':
+        - block: flash-techniques
+          time_slot: '17:00'
+        - block: comp-specific-training
+          time_slot: '19:00'

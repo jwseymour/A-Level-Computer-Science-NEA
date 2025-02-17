@@ -1,0 +1,29 @@
+id: eight-week-transition
+title: 8-Week Trad Transition Program
+tags:
+  - trad
+  - transition
+  - safety
+  - mental
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: mental-prep
+          time_slot: '09:00'
+        - block: route-assessment
+          time_slot: '14:00'
+      '4':
+        - block: gear-placement
+          time_slot: '09:00'
+  - week_number: 2
+    days:
+      '1':
+        - block: gear-placement
+          time_slot: '09:00'
+        - block: mental-prep
+          time_slot: '14:00'
+      '4':
+        - block: anchor-building
+          time_slot: '09:00'

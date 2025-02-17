@@ -1,0 +1,24 @@
+id: twelve-week-advanced
+title: 12-Week Advanced Trad Development
+tags:
+  - trad
+  - outdoor
+  - advanced
+  - technical
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: advanced-protection
+          time_slot: '09:00'
+        - block: complex-anchors
+          time_slot: '14:00'
+      '4':
+        - block: alpine-skills
+          time_slot: '09:00'
+        - block: route-strategy
+          time_slot: '14:00'
+      '6':
+        - block: rescue-systems
+          time_slot: '09:00'

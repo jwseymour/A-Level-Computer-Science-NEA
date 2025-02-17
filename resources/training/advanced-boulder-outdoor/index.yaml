@@ -1,0 +1,26 @@
+id: advanced-boulder-outdoor
+title: Advanced Outdoor Boulder Development
+description: >-
+  An intensive 8-week program designed for intermediate outdoor boulderers
+  looking to push into advanced grades, focusing on complex movement patterns,
+  project management, and high-end problem solving.
+tags:
+  - outdoor
+  - boulder
+  - advanced
+  - power
+  - technical
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - outdoor-boulder-intermediate
+      - outdoor-boulder-advanced
+blocks:
+  - complex-movement
+  - power-development
+  - advanced-spotting
+  - project-tactics
+  - mental-mastery
+plans:
+  - eight-week-advanced

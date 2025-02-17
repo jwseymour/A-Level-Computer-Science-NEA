@@ -1,0 +1,24 @@
+id: six-week-outdoor
+title: 6-Week Outdoor Bouldering Transition
+tags:
+  - outdoor
+  - boulder
+  - safety
+  - technique
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: spotting-safety
+          time_slot: '09:00'
+        - block: environmental-awareness
+          time_slot: '14:00'
+      '4':
+        - block: outdoor-movement
+          time_slot: '09:00'
+        - block: rock-reading
+          time_slot: '14:00'
+      '6':
+        - block: project-management
+          time_slot: '09:00'

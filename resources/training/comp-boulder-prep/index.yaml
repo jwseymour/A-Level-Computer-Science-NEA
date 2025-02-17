@@ -1,0 +1,27 @@
+id: comp-boulder-prep
+title: Competition Boulder Preparation Program
+description: >-
+  A specialized 6-week program designed to transition advanced indoor boulderers
+  to competition bouldering, focusing on competition-specific techniques,
+  problem-solving speed, and mental preparation.
+tags:
+  - competition
+  - boulder
+  - power
+  - technique
+  - mental
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - indoor-boulder-advanced
+      - comp-boulder-beginner
+      - comp-boulder-advanced
+blocks:
+  - comp-movement-patterns
+  - flash-techniques
+  - power-endurance
+  - mental-tactics
+  - comp-specific-training
+plans:
+  - six-week-comp-boulder

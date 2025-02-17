@@ -1,0 +1,27 @@
+id: multi-pitch-transition
+title: Sport to Multi-pitch Transition
+description: >-
+  A comprehensive 6-week program designed to transition sport climbers to
+  multi-pitch climbing, focusing on rope management, anchor building, and route
+  logistics.
+tags:
+  - multi-pitch
+  - sport
+  - outdoor
+  - safety
+  - technical
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - outdoor-sport-intermediate
+      - outdoor-sport-advanced
+      - outdoor-trad-beginner
+blocks:
+  - rope-management
+  - multi-pitch-anchors
+  - route-logistics
+  - partner-communication
+  - self-rescue-basics
+plans:
+  - six-week-multi-pitch

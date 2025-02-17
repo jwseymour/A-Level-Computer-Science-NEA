@@ -1,0 +1,26 @@
+id: advanced-sport-outdoor
+title: Advanced Outdoor Sport Development
+description: >-
+  An intensive 8-week program designed for intermediate sport climbers looking to
+  break into advanced grades (5.13a/7c+ and above), focusing on advanced movement
+  patterns, route tactics, and high-end redpointing strategies.
+tags:
+  - outdoor
+  - sport
+  - advanced
+  - endurance
+  - technical
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - outdoor-sport-intermediate
+      - outdoor-sport-advanced
+blocks:
+  - advanced-movement
+  - power-endurance
+  - redpoint-strategy
+  - route-tactics
+  - mental-preparation
+plans:
+  - eight-week-advanced

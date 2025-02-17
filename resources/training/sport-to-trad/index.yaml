@@ -1,0 +1,27 @@
+id: sport-to-trad
+title: Sport to Traditional Climbing Transition
+description: >-
+  A comprehensive 8-week program designed to transition intermediate sport
+  climbers to traditional climbing, focusing on gear placement, anchor building,
+  and risk assessment.
+tags:
+  - trad
+  - sport
+  - outdoor
+  - safety
+  - technical
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - outdoor-sport-intermediate
+      - outdoor-trad-beginner
+      - outdoor-trad-intermediate
+blocks:
+  - gear-placement
+  - anchor-systems
+  - route-assessment
+  - protection-strategy
+  - multi-pitch-skills
+plans:
+  - eight-week-trad

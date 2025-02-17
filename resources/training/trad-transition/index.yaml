@@ -1,0 +1,27 @@
+id: trad-transition
+title: Indoor to Trad Transition Program
+description: >-
+  A comprehensive program designed to bridge the gap between indoor top rope
+  climbing and traditional climbing, with focus on mental preparation, gear
+  placement, and safety systems.
+tags:
+  - trad
+  - safety
+  - mental
+  - transition
+  - outdoor
+  - training plan
+created_at: '2025-02-17'
+target_paths:
+  - nodes:
+      - indoor-toprope-advanced
+      - outdoor-sport-beginner
+      - outdoor-trad-beginner
+blocks:
+  - mental-prep
+  - gear-placement
+  - anchor-building
+  - safety-systems
+  - route-assessment
+plans:
+  - eight-week-transition

@@ -1,0 +1,24 @@
+id: eight-week-advanced
+title: 8-Week Advanced Sport Development
+tags:
+  - sport
+  - outdoor
+  - advanced
+  - endurance
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: advanced-movement
+          time_slot: '09:00'
+        - block: power-endurance
+          time_slot: '14:00'
+      '4':
+        - block: redpoint-strategy
+          time_slot: '09:00'
+        - block: route-tactics
+          time_slot: '14:00'
+      '6':
+        - block: mental-preparation
+          time_slot: '09:00'

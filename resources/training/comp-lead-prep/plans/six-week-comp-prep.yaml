@@ -1,0 +1,24 @@
+id: six-week-comp-prep
+title: 6-Week Competition Preparation
+tags:
+  - competition
+  - lead
+  - preparation
+  - endurance
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: comp-style-movement
+          time_slot: '17:00'
+        - block: recovery-optimization
+          time_slot: '19:00'
+      '3':
+        - block: endurance-building
+          time_slot: '17:00'
+      '5':
+        - block: speed-efficiency
+          time_slot: '17:00'
+        - block: mental-comp-prep
+          time_slot: '19:00'

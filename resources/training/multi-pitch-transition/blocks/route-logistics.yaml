@@ -1,0 +1,27 @@
+id: route-logistics
+title: Multi-pitch Route Planning
+description: |-
+  1. Route Selection:
+  - Pitch assessment
+  - Descent options
+  - Time management
+
+  2. Weather Planning:
+  - Weather windows
+  - Storm assessment
+  - Bailout options
+
+  3. Equipment:
+  - Gear requirements
+  - Water and food
+  - Emergency supplies
+
+  4. Navigation:
+  - Route finding
+  - Descent planning
+  - Timing estimates
+tags:
+  - planning
+  - safety
+  - logistics
+is_favorited: false

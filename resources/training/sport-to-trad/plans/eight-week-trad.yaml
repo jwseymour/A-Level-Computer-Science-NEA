@@ -1,0 +1,24 @@
+id: eight-week-trad
+title: 8-Week Traditional Climbing Introduction
+tags:
+  - trad
+  - safety
+  - technical
+  - outdoor
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: gear-placement
+          time_slot: '09:00'
+        - block: route-assessment
+          time_slot: '14:00'
+      '4':
+        - block: anchor-systems
+          time_slot: '09:00'
+        - block: protection-strategy
+          time_slot: '14:00'
+      '6':
+        - block: multi-pitch-skills
+          time_slot: '09:00'

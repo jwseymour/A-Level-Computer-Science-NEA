@@ -1,0 +1,24 @@
+id: six-week-multi-pitch
+title: 6-Week Multi-pitch Introduction
+tags:
+  - multi-pitch
+  - safety
+  - technical
+  - outdoor
+is_favorited: false
+weeks:
+  - week_number: 1
+    days:
+      '1':
+        - block: rope-management
+          time_slot: '09:00'
+        - block: multi-pitch-anchors
+          time_slot: '14:00'
+      '4':
+        - block: route-logistics
+          time_slot: '09:00'
+        - block: partner-communication
+          time_slot: '14:00'
+      '6':
+        - block: self-rescue-basics
+          time_slot: '09:00'

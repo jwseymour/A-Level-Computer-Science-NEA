@@ -11,7 +11,7 @@ created_at: "2024-03-20"
 
 target_paths:
   - nodes: 
-      - indoor-boulder-basics
+      - indoor-boulder-beginner
       - indoor-boulder-intermediate
       - indoor-boulder-advanced
 
