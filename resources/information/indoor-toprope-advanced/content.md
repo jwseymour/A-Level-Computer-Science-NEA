@@ -1,43 +1,41 @@
-# Advanced Top Rope Techniques
+# Advanced Indoor Top Rope
 
-## Overview
-Advanced-level instruction focusing on mastery of complex techniques and sophisticated movement patterns in indoor toprope.
+## Level Description
+Advanced top rope climbers demonstrate mastery of movement and technical skills. They excel in:
+- Complex movement sequences
+- Efficient energy management
+- Advanced problem solving
+- Teaching and mentoring others
 
-## Advanced Concepts
-- Complex movement patterns
-- Advanced route reading
-- Energy system optimization
-- Performance psychology
-- Training periodization
+## Physical Benchmarks
+- Climbing grades 5.11c-5.12+ consistently
+- 10+ pull-ups for males, 5+ for females
+- One-arm lock-off ability
+- 30+ second front lever hold
+- Extended climbing sessions (45+ minutes)
 
-## Technical Mastery
-- Subtle body positioning
-- Advanced sequence optimization
-- Specialized techniques
-- Power application
-- Technical problem-solving
+## Key Areas for Improvement
+1. Elite Movement
+   - Complex sequence linking
+   - Micro-beta optimization
+   - Power endurance
+   - Technical precision
 
-## Performance Optimization
-- Mental preparation
-- Competition strategies
-- Peak performance timing
+2. Physical Training
+   - Fingerboard protocols
+   - Campus board training
+   - Specialized core work
+   - Power development
+
+3. Mental Mastery
+   - Competition preparation
+   - Performance anxiety management
+   - Flow state access
+   - Strategic projecting
+
+## Progression Strategies
+- Periodized training plans
+- Regular performance analysis
+- Cross-discipline exposure
 - Recovery optimization
-- Injury prevention
-
-## Training Integration
-- Periodization strategies
-- Performance analysis
-- Weakness identification
-- Targeted improvement
-
-## Expert Considerations
-- Risk management
-- Training load balance
-- Long-term progression
-- Sustainable development
-
-## Mastery Indicators
-- Technical excellence
-- Movement efficiency
-- Mental resilience
-- Performance consistency
+- Technique refinement

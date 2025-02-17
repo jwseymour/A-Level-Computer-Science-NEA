@@ -1,43 +1,40 @@
-# Indoor Lead Movement & Efficiency
+# Intermediate Indoor Lead
 
-## Overview
-Advanced-level instruction focusing on mastery of complex techniques and sophisticated movement patterns in indoor lead.
+## Level Description
+Intermediate lead climbers demonstrate confidence and competency in:
+- Efficient clipping and rope management
+- Complex movement while leading
+- Strategic rest positioning
+- Advanced risk assessment
 
-## Advanced Concepts
-- Complex movement patterns
-- Advanced route reading
-- Energy system optimization
-- Performance psychology
-- Training periodization
+## Physical Benchmarks
+- Leading routes 5.10c-5.11b
+- 7+ pull-ups for males, 3+ for females
+- 45+ second front plank
+- Comfortable with dynamic moves on lead
 
-## Technical Mastery
-- Subtle body positioning
-- Advanced sequence optimization
-- Specialized techniques
-- Power application
-- Technical problem-solving
+## Key Areas for Improvement
+1. Advanced Lead Techniques
+   - Skip clipping strategy
+   - Efficient rope management
+   - Complex sequence execution
+   - Rest position optimization
 
-## Performance Optimization
-- Mental preparation
-- Competition strategies
-- Peak performance timing
-- Recovery optimization
-- Injury prevention
+2. Physical Development
+   - Power endurance
+   - Core tension
+   - Finger strength
+   - Overall stamina
 
-## Training Integration
-- Periodization strategies
-- Performance analysis
-- Weakness identification
-- Targeted improvement
+3. Mental Advancement
+   - Projecting strategy
+   - Competitive mindset
+   - Flow state development
+   - Stress management
 
-## Expert Considerations
-- Risk management
-- Training load balance
-- Long-term progression
-- Sustainable development
-
-## Mastery Indicators
-- Technical excellence
-- Movement efficiency
-- Mental resilience
-- Performance consistency
+## Progression Strategies
+- Structured endurance training
+- Regular projecting
+- Cross-training integration
+- Mental training exercises
+- Technical refinement

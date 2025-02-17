@@ -1,43 +1,41 @@
-# Advanced Bouldering Techniques
+# Advanced Indoor Boulder
 
-## Overview
-Advanced-level instruction focusing on mastery of complex techniques and sophisticated movement patterns in indoor boulder.
+## Level Description
+Advanced boulderers excel in:
+- Complex movement sequences
+- Power management
+- Creative problem solving
+- Technical mastery
 
-## Advanced Concepts
-- Complex movement patterns
-- Advanced route reading
-- Energy system optimization
-- Performance psychology
-- Training periodization
+## Physical Benchmarks
+- Climbing V6-V8 consistently
+- 10+ pull-ups
+- One-arm dead hangs
+- Complex dynamic movements
+- Front lever holds
 
-## Technical Mastery
-- Subtle body positioning
-- Advanced sequence optimization
-- Specialized techniques
-- Power application
-- Technical problem-solving
+## Key Areas for Improvement
+1. Elite Movement
+   - Complex coordination
+   - Power precision
+   - Micro beta optimization
+   - Movement innovation
 
-## Performance Optimization
-- Mental preparation
-- Competition strategies
-- Peak performance timing
+2. Physical Development
+   - Maximum strength
+   - Explosive power
+   - Contact strength
+   - Body tension mastery
+
+3. Mental Advancement
+   - Competition preparation
+   - High-stakes performance
+   - Project management
+   - Flow state access
+
+## Progression Strategies
+- Specialized power training
+- Competition participation
+- Cross-discipline exposure
 - Recovery optimization
-- Injury prevention
-
-## Training Integration
-- Periodization strategies
-- Performance analysis
-- Weakness identification
-- Targeted improvement
-
-## Expert Considerations
-- Risk management
-- Training load balance
-- Long-term progression
-- Sustainable development
-
-## Mastery Indicators
-- Technical excellence
-- Movement efficiency
-- Mental resilience
-- Performance consistency
+- Technical mastery

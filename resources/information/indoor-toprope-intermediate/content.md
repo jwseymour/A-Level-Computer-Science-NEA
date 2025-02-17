@@ -1,41 +1,41 @@
-# Indoor Top Rope Movement
+# Intermediate Indoor Top Rope
 
-## Overview
-Building on fundamental skills, this guide focuses on refining technique and developing efficiency in indoor toprope.
-
-## Advanced Techniques
-- Dynamic movement
-- Route reading strategies
+## Level Description
+Intermediate top rope climbers demonstrate refined technique and beginning to develop their own climbing style. They understand:
+- Efficient movement patterns
+- Advanced route reading
 - Energy conservation
-- Advanced footwork
-- Body tension
+- Various grip techniques
 
-## Movement Efficiency
-- Momentum utilization
-- Rest positions
-- Breathing techniques
-- Sequence optimization
+## Physical Benchmarks
+- Ability to climb continuously for 20-30 minutes
+- Comfortable on 5.9-5.11a routes
+- Can perform basic lock-off moves
+- Hold a front plank for 2 minutes
+- 5+ pull-ups for males, 2+ for females
 
-## Mental Training
-- Focus techniques
-- Stress management
-- Visualization practices
-- Performance preparation
+## Key Areas for Improvement
+1. Advanced Movement
+   - Dynamic movements
+   - Flag positions
+   - Drop knee technique
+   - Advanced foot techniques
 
-## Training Concepts
-- Strength development
-- Endurance building
-- Flexibility requirements
-- Recovery strategies
+2. Strength Development
+   - Finger strength training
+   - Core tension exercises
+   - Pull-up progression
+   - Antagonist muscle training
 
-## Common Challenges
-- Plateau breaking
-- Technical barriers
-- Mental blocks
-- Physical limitations
+3. Mental Techniques
+   - Visualization
+   - Breathing control
+   - Focus under pump
+   - Strategic resting
 
-## Progress Assessment
-- Movement quality
-- Technical precision
-- Problem-solving ability
-- Physical conditioning
+## Progression Strategies
+- Structured training sessions
+- Regular projecting practice
+- Cross-training focus
+- Recovery management
+- Movement analysis

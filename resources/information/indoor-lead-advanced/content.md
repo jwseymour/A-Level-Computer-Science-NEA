@@ -1,46 +1,41 @@
-# Advanced Indoor Lead Techniques
+# Advanced Indoor Lead
 
-## Overview
-Expert-level guidance for mastering the most complex aspects of indoor lead, focusing on performance optimization and technical excellence.
+## Level Description
+Advanced lead climbers demonstrate mastery of lead climbing with:
+- Complex sequence management while clipping
+- Efficient rope handling in all situations
+- Advanced risk assessment and management
+- Ability to coach and mentor others
 
-## Elite Techniques
-- Complex movement systems
-- Advanced problem-solving
-- Performance optimization
-- Technical innovation
-- Strategic mastery
+## Physical Benchmarks
+- Leading routes 5.12a-5.13a
+- 12+ pull-ups for males, 6+ for females
+- One-arm lock-off holds (both sides)
+- 60+ second front lever
+- Complex dynamic moves while leading
 
-## Performance Psychology
-- Elite mindset development
-- Pressure management
-- Competition psychology
-- Mental toughness
-- Flow state access
+## Key Areas for Improvement
+1. Elite Lead Techniques
+   - Onsight preparation
+   - Advanced clipping positions
+   - Complex sequence optimization
+   - Recovery while climbing
 
-## Training Systems
-- Advanced periodization
-- Performance analysis
+2. Physical Training
+   - Power endurance
+   - Specialized finger strength
+   - Core power
+   - Dynamic movement control
+
+3. Mental Mastery
+   - Competition mindset
+   - Flow state management
+   - High-stakes performance
+   - Project management
+
+## Progression Strategies
+- Periodized training plans
+- Regular competition participation
+- Cross-discipline training
 - Recovery optimization
-- Injury prevention
-- Long-term development
-
-## Technical Excellence
-- Movement efficiency
-- Energy system optimization
-- Technical precision
-- Strategic thinking
-- Innovation in technique
-
-## Mastery Development
-- Continuous improvement
-- Knowledge integration
-- Teaching capability
-- Community leadership
-- Sport contribution
-
-## Legacy Building
-- Technique development
-- Knowledge sharing
-- Community impact
-- Sport advancement
-- Personal growth
+- Technical refinement

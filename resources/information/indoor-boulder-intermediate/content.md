@@ -1,41 +1,41 @@
-# Indoor Bouldering Movement
+# Intermediate Indoor Boulder
 
-## Overview
-Building on fundamental skills, this guide focuses on refining technique and developing efficiency in indoor boulder.
+## Level Description
+Intermediate boulderers demonstrate:
+- Dynamic movement control
+- Power application
+- Technical problem-solving
+- Efficient movement patterns
 
-## Advanced Techniques
-- Dynamic movement
-- Route reading strategies
-- Energy conservation
-- Advanced footwork
-- Body tension
+## Physical Benchmarks
+- Consistently climbing V3-V5
+- 5-7 pull-ups
+- 45-second dead hang on 20mm edge
+- Ability to perform basic dynos
+- L-sit for 10 seconds
 
-## Movement Efficiency
-- Momentum utilization
-- Rest positions
-- Breathing techniques
-- Sequence optimization
+## Key Areas for Improvement
+1. Advanced Movement
+   - Dynamic techniques
+   - Power application
+   - Technical heel hooks
+   - Toe hook utilization
 
-## Mental Training
-- Focus techniques
-- Stress management
-- Visualization practices
-- Performance preparation
+2. Strength Development
+   - Finger strength training
+   - Power training
+   - Core tension
+   - Upper body strength
 
-## Training Concepts
-- Strength development
-- Endurance building
-- Flexibility requirements
-- Recovery strategies
+3. Technical Skills
+   - Advanced problem reading
+   - Sequence optimization
+   - Energy efficiency
+   - Movement creativity
 
-## Common Challenges
-- Plateau breaking
-- Technical barriers
-- Mental blocks
-- Physical limitations
-
-## Progress Assessment
-- Movement quality
-- Technical precision
-- Problem-solving ability
-- Physical conditioning
+## Progression Strategies
+- Power training integration
+- Regular projecting
+- Cross-training focus
+- Recovery management
+- Technique refinement
