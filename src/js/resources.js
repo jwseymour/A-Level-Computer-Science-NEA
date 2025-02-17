@@ -7,12 +7,13 @@ let graphData = null;
 let allResources = [];
 
 // Initialize D3 force simulation
-const width = 800;
+const width = 1000;
 const height = 600;
 const svg = d3.select('#disciplineGraph')
     .append('svg')
     .attr('width', width)
-    .attr('height', height);
+    .attr('height', height)
+    .attr('viewBox', `0 0 ${width} ${height}`);
 
 // Create background group for discipline regions
 const backgroundGroup = svg.append('g')
@@ -25,7 +26,7 @@ const gradientDefs = svg.append('defs');
 svg.append('defs').append('marker')
     .attr('id', 'arrowhead')
     .attr('viewBox', '-0 -5 10 10')
-    .attr('refX', 20)
+    .attr('refX', 0)
     .attr('refY', 0)
     .attr('orient', 'auto')
     .attr('markerWidth', 6)
@@ -138,12 +139,33 @@ function createDisciplineRegions(nodes) {
 }
 
 function getBackgroundColor(discipline) {
-    switch(discipline) {
-        case 'indoor-toprope': return '#ff5252';
-        case 'indoor-lead': return '#4caf50';
-        case 'indoor-boulder': return '#2196f3';
-        default: return '#fff';
+    // Indoor disciplines - warm colors
+    if (discipline.startsWith('indoor-')) {
+        switch(discipline) {
+            case 'indoor-toprope': return '#ff7043'; // Orange-red
+            case 'indoor-lead': return '#ff5252';    // Red
+            case 'indoor-boulder': return '#ff8a65';  // Light orange
+        }
     }
+    
+    // Outdoor disciplines - cool colors
+    if (discipline.startsWith('outdoor-')) {
+        switch(discipline) {
+            case 'outdoor-sport': return '#42a5f5';  // Blue
+            case 'outdoor-trad': return '#1e88e5';   // Darker blue
+            case 'outdoor-boulder': return '#64b5f6'; // Light blue
+        }
+    }
+    
+    // Competition disciplines - green colors
+    if (discipline.startsWith('comp-')) {
+        switch(discipline) {
+            case 'comp-lead': return '#66bb6a';     // Green
+            case 'comp-boulder': return '#81c784';   // Light green
+        }
+    }
+    
+    return '#9e9e9e'; // Default gray for any unmatched disciplines
 }
 
 function createNodeGradient(id, baseColor) {
@@ -213,35 +235,69 @@ function renderGraph(graph, resources) {
 
     // Calculate positions
     Object.entries(levelGroups).forEach(([level, nodes]) => {
-        const levelY = height - (height * (level / (maxLevel + 1)));
-        const spacing = width / (nodes.length + 1);
+        // Adjust vertical spacing
+        const levelY = height - (height * ((level - 0.5) / (maxLevel + 1)));
+        
+        // Simple horizontal spacing
+        const totalWidth = width * 0.8; // Use 80% of width
+        const margin = width * 0.1;  // 10% margin on each side
+        const spacing = totalWidth / Math.max(nodes.length - 1, 1);
+        
+        // Sort nodes by discipline to keep related nodes closer
+        nodes.sort((a, b) => a.discipline.localeCompare(b.discipline));
         
         nodes.forEach((node, index) => {
-            node.x = spacing * (index + 1);
+            if (nodes.length === 1) {
+                // Find the node this single node connects to
+                const connectedEdge = graph.edges.find(e => e.from === node.id || e.to === node.id);
+                if (connectedEdge) {
+                    const connectedNodeId = connectedEdge.from === node.id ? connectedEdge.to : connectedEdge.from;
+                    const connectedNode = graph.nodes.find(n => n.id === connectedNodeId);
+                    node.x = connectedNode.x; // Position directly above/below connected node
+                } else {
+                    node.x = width / 2; // Fall back to center if no connection found
+                }
+            } else {
+                node.x = margin + (spacing * index);
+            }
             node.y = levelY;
         });
     });
 
-    // Draw edges
+
+    // Draw edges with curves and centered arrows
     const edges = svg.append('g')
-        .selectAll('line')
+        .selectAll('path')
         .data(graph.edges)
-        .enter().append('line')
+        .enter().append('path')
+        .attr('fill', 'none')
         .attr('stroke', '#999')
         .attr('stroke-width', 1)
-        .attr('marker-end', 'url(#arrowhead)')
-        .attr('x1', d => graph.nodes.find(n => n.id === d.from).x)
-        .attr('y1', d => graph.nodes.find(n => n.id === d.from).y)
-        .attr('x2', d => graph.nodes.find(n => n.id === d.to).x)
-        .attr('y2', d => graph.nodes.find(n => n.id === d.to).y);
+        .attr('marker-mid', 'url(#arrowhead)')  // Changed from marker-end to marker-mid
+        .attr('d', d => {
+            const source = graph.nodes.find(n => n.id === d.from);
+            const target = graph.nodes.find(n => n.id === d.to);
+            const midY = (source.y + target.y) / 2;
+            
+            // Create a path with a midpoint marker
+            return `M${source.x},${source.y} 
+                    L${(source.x + target.x)/2},${midY}
+                    M${(source.x + target.x)/2},${midY}
+                    L${target.x},${target.y}`;
+        });
 
     // Create discipline regions
     createDisciplineRegions(graph.nodes);
 
     // Create gradients for each discipline
-    createNodeGradient('gradient-toprope', '#ffcdd2');
-    createNodeGradient('gradient-lead', '#c8e6c9');
-    createNodeGradient('gradient-boulder', '#bbdefb');
+    createNodeGradient('gradient-toprope', '#ff7043');
+    createNodeGradient('gradient-lead', '#ff5252');
+    createNodeGradient('gradient-boulder', '#ff8a65');
+    createNodeGradient('gradient-outdoor-sport', '#42a5f5');
+    createNodeGradient('gradient-outdoor-trad', '#1e88e5');
+    createNodeGradient('gradient-outdoor-boulder', '#64b5f6');
+    createNodeGradient('gradient-comp-lead', '#66bb6a');
+    createNodeGradient('gradient-comp-boulder', '#81c784');
 
     // Draw nodes
     const nodes = svg.append('g')
@@ -267,22 +323,37 @@ function renderGraph(graph, resources) {
 
     // Add background rectangles with gradient
     nodes.append('rect')
-    .attr('width', d => d.textWidth + 20)
-    .attr('height', d => d.textHeight + 10)
-    .attr('x', d => -(d.textWidth + 20) / 2)
-    .attr('y', d => -(d.textHeight + 10) / 2)
-    .attr('rx', 5)
-    .attr('ry', 5)
-    .attr('fill', 'white')
-    .attr('stroke', d => {
-        switch(d.discipline) {
-            case 'indoor-toprope': return 'url(#border-gradient-toprope)';
-            case 'indoor-lead': return 'url(#border-gradient-lead)';
-            case 'indoor-boulder': return 'url(#border-gradient-boulder)';
-            default: return '#33333333';
-        }
-    })
-    .attr('stroke-width', 4);
+        .attr('width', d => d.textWidth + 20)
+        .attr('height', d => d.textHeight + 10)
+        .attr('x', d => -(d.textWidth + 20) / 2)
+        .attr('y', d => -(d.textHeight + 10) / 2)
+        .attr('rx', 5)
+        .attr('ry', 5)
+        .attr('fill', 'white')
+        .attr('stroke', d => {
+            if (d.discipline.startsWith('indoor-')) {
+                switch(d.discipline) {
+                    case 'indoor-toprope': return 'url(#border-gradient-toprope)';
+                    case 'indoor-lead': return 'url(#border-gradient-lead)';
+                    case 'indoor-boulder': return 'url(#border-gradient-boulder)';
+                }
+            }
+            if (d.discipline.startsWith('outdoor-')) {
+                switch(d.discipline) {
+                    case 'outdoor-sport': return 'url(#border-gradient-outdoor-sport)';
+                    case 'outdoor-trad': return 'url(#border-gradient-outdoor-trad)';
+                    case 'outdoor-boulder': return 'url(#border-gradient-outdoor-boulder)';
+                }
+            }
+            if (d.discipline.startsWith('comp-')) {
+                switch(d.discipline) {
+                    case 'comp-lead': return 'url(#border-gradient-comp-lead)';
+                    case 'comp-boulder': return 'url(#border-gradient-comp-boulder)';
+                }
+            }
+            return '#33333333';
+        })
+        .attr('stroke-width', 4);
 
     // Add text labels with wrapping
     nodes.append('text')

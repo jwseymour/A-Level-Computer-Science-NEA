@@ -552,12 +552,6 @@ button:hover {
     background-color: #0056b3;
 }
 
-.resources-container {
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
 .resources-header {
     margin-bottom: 2rem;
 }
@@ -1011,7 +1005,7 @@ button:hover {
 
 /* Resource Detail Page Styles */
 .resource-detail-container {
-    max-width: 1200px;
+    max-width: 1000px;
     margin: 2rem auto;
     padding: 0 2rem;
 }
@@ -1170,13 +1164,17 @@ button:hover {
 }
 
 #disciplineGraph {
-    width: 800px;
+    width: 1000px;
     height: 600px;
     margin: 0 auto;
     border: 1px solid #ddd;
     border-radius: 4px;
     background: white;
-    overflow: hidden;
+    overflow: auto;
+}
+
+.resources-container {
+    padding: 2rem;
 }
 
 .training-suggestions {

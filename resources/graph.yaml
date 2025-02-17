@@ -1,76 +1,192 @@
-# Defines the climbing discipline graph structure
 nodes:
-  # Indoor Top Rope Progression
-  - id: indoor-toprope-basics
-    title: "Indoor Top Rope Fundamentals"
+  # Indoor Top Rope
+  - id: indoor-toprope-beginner
+    title: "Indoor Top Rope Basics"
     level: 1
     discipline: "indoor-toprope"
     
   - id: indoor-toprope-intermediate
-    title: "Indoor Top Rope Movement"
+    title: "Intermediate Indoor Top Rope"
     level: 2
     discipline: "indoor-toprope"
     
   - id: indoor-toprope-advanced
-    title: "Advanced Top Rope Techniques"
+    title: "Advanced Indoor Top Rope"
     level: 3
     discipline: "indoor-toprope"
 
-  # Indoor Lead Progression
-  - id: indoor-lead-basics
-    title: "Indoor Lead Climbing Fundamentals"
+  # Indoor Lead
+  - id: indoor-lead-beginner
+    title: "Indoor Lead Basics"
     level: 2
     discipline: "indoor-lead"
     
   - id: indoor-lead-intermediate
-    title: "Indoor Lead Movement & Efficiency"
+    title: "Intermediate Indoor Lead"
     level: 3
     discipline: "indoor-lead"
     
   - id: indoor-lead-advanced
-    title: "Advanced Indoor Lead Techniques"
+    title: "Advanced Indoor Lead"
     level: 4
     discipline: "indoor-lead"
 
-  # Bouldering Progression
-  - id: indoor-boulder-basics
-    title: "Indoor Bouldering Fundamentals"
+  # Indoor Boulder
+  - id: indoor-boulder-beginner
+    title: "Indoor Bouldering Basics"
     level: 1
     discipline: "indoor-boulder"
     
   - id: indoor-boulder-intermediate
-    title: "Indoor Bouldering Movement"
+    title: "Intermediate Indoor Boulder"
     level: 2
     discipline: "indoor-boulder"
     
   - id: indoor-boulder-advanced
-    title: "Advanced Bouldering Techniques"
+    title: "Advanced Indoor Boulder"
     level: 3
     discipline: "indoor-boulder"
 
+  # Outdoor Sport
+  - id: outdoor-sport-beginner
+    title: "Outdoor Sport Basics"
+    level: 3
+    discipline: "outdoor-sport"
+    
+  - id: outdoor-sport-intermediate
+    title: "Intermediate Outdoor Sport"
+    level: 4
+    discipline: "outdoor-sport"
+    
+  - id: outdoor-sport-advanced
+    title: "Advanced Outdoor Sport"
+    level: 5
+    discipline: "outdoor-sport"
+
+  # Outdoor Trad
+  - id: outdoor-trad-beginner
+    title: "Traditional Climbing Basics"
+    level: 4
+    discipline: "outdoor-trad"
+    
+  - id: outdoor-trad-intermediate
+    title: "Intermediate Trad Climbing"
+    level: 5
+    discipline: "outdoor-trad"
+    
+  - id: outdoor-trad-advanced
+    title: "Advanced Trad Climbing"
+    level: 6
+    discipline: "outdoor-trad"
+
+  # Outdoor Boulder
+  - id: outdoor-boulder-beginner
+    title: "Outdoor Bouldering Basics"
+    level: 2
+    discipline: "outdoor-boulder"
+    
+  - id: outdoor-boulder-intermediate
+    title: "Intermediate Outdoor Boulder"
+    level: 3
+    discipline: "outdoor-boulder"
+    
+  - id: outdoor-boulder-advanced
+    title: "Advanced Outdoor Boulder"
+    level: 4
+    discipline: "outdoor-boulder"
+
+  # Competition
+  - id: comp-boulder-beginner
+    title: "Competition Bouldering Basics"
+    level: 3
+    discipline: "comp-boulder"
+    
+  - id: comp-boulder-advanced
+    title: "Advanced Competition Boulder"
+    level: 4
+    discipline: "comp-boulder"
+    
+  - id: comp-lead-beginner
+    title: "Competition Lead Basics"
+    level: 4
+    discipline: "comp-lead"
+    
+  - id: comp-lead-advanced
+    title: "Advanced Competition Lead"
+    level: 5
+    discipline: "comp-lead"
+
 edges:
-  # Top Rope Progression
-  - from: indoor-toprope-basics
+  # Indoor Top Rope Progression
+  - from: indoor-toprope-beginner
     to: indoor-toprope-intermediate
   - from: indoor-toprope-intermediate
     to: indoor-toprope-advanced
-    
-  # Lead Progression
-  - from: indoor-toprope-intermediate
-    to: indoor-lead-basics
-  - from: indoor-lead-basics
+
+  # Indoor Lead Progression
+  - from: indoor-lead-beginner
     to: indoor-lead-intermediate
   - from: indoor-lead-intermediate
     to: indoor-lead-advanced
-    
-  # Bouldering Progression
-  - from: indoor-boulder-basics
+
+  # Indoor Boulder Progression
+  - from: indoor-boulder-beginner
     to: indoor-boulder-intermediate
   - from: indoor-boulder-intermediate
     to: indoor-boulder-advanced
-    
-  # Cross-discipline connections
-  - from: indoor-boulder-basics
-    to: indoor-toprope-basics
+
+  # Outdoor Sport Progression
+  - from: outdoor-sport-beginner
+    to: outdoor-sport-intermediate
+  - from: outdoor-sport-intermediate
+    to: outdoor-sport-advanced
+
+  # Outdoor Trad Progression
+  - from: outdoor-trad-beginner
+    to: outdoor-trad-intermediate
+  - from: outdoor-trad-intermediate
+    to: outdoor-trad-advanced
+
+  # Outdoor Boulder Progression
+  - from: outdoor-boulder-beginner
+    to: outdoor-boulder-intermediate
+  - from: outdoor-boulder-intermediate
+    to: outdoor-boulder-advanced
+
+  # Competition Progression
+  - from: comp-boulder-beginner
+    to: comp-boulder-advanced
+  - from: comp-lead-beginner
+    to: comp-lead-advanced
+
+  # Cross-Discipline Connections (Indoor)
+  - from: indoor-toprope-intermediate
+    to: indoor-lead-beginner
   - from: indoor-boulder-intermediate
-    to: indoor-lead-basics
+    to: indoor-lead-beginner
+
+  # Indoor to Outdoor Transitions
+  - from: indoor-lead-intermediate
+    to: outdoor-sport-beginner
+  - from: indoor-toprope-advanced
+    to: outdoor-sport-beginner
+  - from: indoor-boulder-advanced
+    to: outdoor-sport-beginner
+  - from: indoor-boulder-intermediate
+    to: outdoor-boulder-beginner
+  - from: outdoor-sport-intermediate
+    to: outdoor-trad-beginner
+  - from: outdoor-boulder-intermediate
+    to: outdoor-sport-beginner
+
+  # Competition Transitions
+  - from: indoor-boulder-advanced
+    to: comp-boulder-beginner
+  - from: indoor-lead-advanced
+    to: comp-lead-beginner
+  - from: outdoor-sport-advanced
+    to: comp-lead-beginner
+  - from: comp-boulder-beginner
+    to: comp-lead-beginner
+  - from: outdoor-boulder-advanced
+    to: comp-boulder-beginner
