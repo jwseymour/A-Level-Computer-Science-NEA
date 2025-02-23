@@ -54,15 +54,15 @@ async function loadBlocks() {
 }
 
 function filterBlocks() {
-    const favoritesOnly = document.getElementById('blocksFavoritesOnly').checked;
+    const favouritesOnly = document.getElementById('blocksfavouritesOnly').checked;
     const selectedTag = document.getElementById('blockTagFilter').value;
     
     const filteredBlocks = allBlocks.filter(block => {
-        const matchesFavorite = !favoritesOnly || block.is_favorited;
+        const matchesfavourite = !favouritesOnly || block.is_favourited;
         const matchesTag = !selectedTag || 
             (block.tags && block.tags.split(',').map(t => t.trim()).includes(selectedTag));
         
-        return matchesFavorite && matchesTag;
+        return matchesfavourite && matchesTag;
     });
     
     blocks = filteredBlocks;
@@ -76,16 +76,16 @@ function renderBlocks() {
             <div class="block-header">
                 <div class="block-title-wrapper">
                     <div class="block-title">${block.title}</div>
-                    <span class="block-favorite-indicator ${block.is_favorited ? 'active' : ''}">★</span>
+                    <span class="block-favourite-indicator ${block.is_favourited ? 'active' : ''}">★</span>
                 </div>
                 <div class="block-actions">
                     <button class="icon-button dropdown-trigger" onclick="toggleDropdown(event)">
                         ⋮
                     </button>
                     <div class="dropdown-menu">
-                        <button class="dropdown-item favorite-btn ${block.is_favorited ? 'active' : ''}" 
-                                onclick="toggleBlockFavorite(${block.id}, event)">
-                            ${block.is_favorited ? '★ Unfavorite' : '☆ Favorite'}
+                        <button class="dropdown-item favourite-btn ${block.is_favourited ? 'active' : ''}" 
+                                onclick="toggleBlockfavourite(${block.id}, event)">
+                            ${block.is_favourited ? '★ Unfavourite' : '☆ favourite'}
                         </button>
                         <button class="dropdown-item" onclick="editBlock(${block.id}, event)">
                             ✎ Edit
@@ -131,11 +131,11 @@ document.addEventListener('click', (event) => {
     }
 });
 
-// Add toggle favorite function
-async function toggleBlockFavorite(blockId, event) {
+// Add toggle favourite function
+async function toggleBlockfavourite(blockId, event) {
     event.stopPropagation();
     try {
-        const response = await fetch(`/api/blocks/${blockId}/favorite`, {
+        const response = await fetch(`/api/blocks/${blockId}/favourite`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -143,13 +143,13 @@ async function toggleBlockFavorite(blockId, event) {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to toggle favorite');
+            throw new Error('Failed to toggle favourite');
         }
 
         // Refresh blocks list
         loadBlocks();
     } catch (error) {
-        console.error('Error toggling block favorite:', error);
+        console.error('Error toggling block favourite:', error);
     }
 }
 
@@ -164,7 +164,7 @@ async function editBlock(blockId, event) {
 
     const description = prompt('Edit block description:', block.description || '');
     const tags = prompt('Edit block tags (comma-separated):', block.tags || '');
-    const is_favorited = 0;
+    const is_favourited = 0;
 
     try {
         const response = await fetch(`/api/blocks/${blockId}`, {
@@ -173,7 +173,7 @@ async function editBlock(blockId, event) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify({ title, description, tags, is_favorited })
+            body: JSON.stringify({ title, description, tags, is_favourited })
         });
 
         if (!response.ok) throw new Error('Failed to update block');
@@ -257,9 +257,9 @@ function showBlockSelectionModal(dropZone) {
                             `<option value="${tag}">${tag}</option>`
                         ).join('')}
                     </select>
-                    <label class="favorite-filter">
-                        <input type="checkbox" id="modalBlocksFavoritesOnly">
-                        <span class="favorite-label">★ Favorites Only</span>
+                    <label class="favourite-filter">
+                        <input type="checkbox" id="modalBlocksfavouritesOnly">
+                        <span class="favourite-label">★ favourites Only</span>
                     </label>
                 </div>
                 <button class="modal-close">×</button>
@@ -270,7 +270,7 @@ function showBlockSelectionModal(dropZone) {
                         <div class="block-header">
                             <div class="block-title-wrapper">
                                 <div class="block-title">${block.title}</div>
-                                <span class="block-favorite-indicator ${block.is_favorited ? 'active' : ''}">★</span>
+                                <span class="block-favourite-indicator ${block.is_favourited ? 'active' : ''}">★</span>
                             </div>
                         </div>
                         <div class="block-description">${block.description || ''}</div>
@@ -285,15 +285,15 @@ function showBlockSelectionModal(dropZone) {
 
     // Add filter functionality
     function filterModalBlocks() {
-        const favoritesOnly = document.getElementById('modalBlocksFavoritesOnly').checked;
+        const favouritesOnly = document.getElementById('modalBlocksfavouritesOnly').checked;
         const selectedTag = document.getElementById('modalBlockTagFilter').value;
         
         const filteredBlocks = allBlocks.filter(block => {
-            const matchesFavorite = !favoritesOnly || block.is_favorited;
+            const matchesfavourite = !favouritesOnly || block.is_favourited;
             const matchesTag = !selectedTag || 
                 (block.tags && block.tags.split(',').map(t => t.trim()).includes(selectedTag));
             
-            return matchesFavorite && matchesTag;
+            return matchesfavourite && matchesTag;
         });
         
         const modalBlocks = modal.querySelector('.modal-blocks');
@@ -302,7 +302,7 @@ function showBlockSelectionModal(dropZone) {
                 <div class="block-header">
                     <div class="block-title-wrapper">
                         <div class="block-title">${block.title}</div>
-                        <span class="block-favorite-indicator ${block.is_favorited ? 'active' : ''}">★</span>
+                        <span class="block-favourite-indicator ${block.is_favourited ? 'active' : ''}">★</span>
                     </div>
                 </div>
                 <div class="block-description">${block.description || ''}</div>
@@ -337,7 +337,7 @@ function showBlockSelectionModal(dropZone) {
 
     // Add filter event listeners
     modal.querySelector('#modalBlockTagFilter').addEventListener('change', filterModalBlocks);
-    modal.querySelector('#modalBlocksFavoritesOnly').addEventListener('change', filterModalBlocks);
+    modal.querySelector('#modalBlocksfavouritesOnly').addEventListener('change', filterModalBlocks);
     
     // Initial click handlers
     attachBlockClickHandlers();
@@ -623,7 +623,7 @@ function createEditablePlan(plan) {
         id: plan.id,
         title: plan.title,
         tags: plan.tags,
-        is_favorited: plan.is_favorited,
+        is_favourited: plan.is_favourited,
         weeks: plan.weeks.map(week => ({
             id: week.id,
             week_number: week.week_number,
@@ -750,14 +750,14 @@ function deleteWeek(event) {
 // Initialize event listeners after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const blockTagFilter = document.getElementById('blockTagFilter');
-    const blocksFavoritesOnly = document.getElementById('blocksFavoritesOnly');
+    const blocksfavouritesOnly = document.getElementById('blocksfavouritesOnly');
     
     if (blockTagFilter) {
         blockTagFilter.addEventListener('change', filterBlocks);
     }
     
-    if (blocksFavoritesOnly) {
-        blocksFavoritesOnly.addEventListener('change', filterBlocks);
+    if (blocksfavouritesOnly) {
+        blocksfavouritesOnly.addEventListener('change', filterBlocks);
     }
     
     // Load initial data

@@ -56,35 +56,35 @@ async function createTrainingResource() {
             title: 'Advanced Protection Strategies',
             description: '1. Complex Placements:\n- Horizontal placements\n- Expanding flakes\n- Offset configurations\n\n2. Mixed Protection:\n- Hybrid anchor systems\n- Micro protection\n- Natural protection\n\n3. Advanced Gear:\n- Specialized protection\n- Aid placement techniques\n- Testing methodologies\n\n4. Protection Strategy:\n- Run-out management\n- Psychological protection\n- Efficiency in placement',
             tags: ['protection', 'technical', 'advanced'],
-            is_favorited: false
+            is_favourited: false
         },
         'complex-anchors': {
             id: 'complex-anchors',
             title: 'Complex Anchor Systems',
             description: '1. Advanced Anchors:\n- Complex equalizations\n- Limited placement options\n- Directional considerations\n\n2. Specialized Systems:\n- Alpine anchors\n- Remote belays\n- Multi-directional anchors\n\n3. Efficiency:\n- Quick construction\n- Material optimization\n- System assessment\n\n4. Problem Solving:\n- Unusual situations\n- Emergency anchors\n- System adaptation',
             tags: ['anchors', 'systems', 'technical'],
-            is_favorited: false
+            is_favourited: false
         },
         'alpine-skills': {
             id: 'alpine-skills',
             title: 'Alpine Climbing Skills',
             description: '1. Alpine Techniques:\n- Fast and light strategy\n- Weather assessment\n- Terrain navigation\n\n2. Time Management:\n- Alpine starts\n- Efficient transitions\n- Descent planning\n\n3. Risk Assessment:\n- Objective hazards\n- Weather windows\n- Team capabilities\n\n4. Alpine Systems:\n- Glacier travel\n- Snow anchors\n- Alpine rescue',
             tags: ['alpine', 'technical', 'safety'],
-            is_favorited: false
+            is_favourited: false
         },
         'route-strategy': {
             id: 'route-strategy',
             title: 'Advanced Route Strategy',
             description: '1. Route Finding:\n- Complex terrain\n- Alternative lines\n- Descent options\n\n2. Grade Management:\n- Style considerations\n- Mental preparation\n- Energy conservation\n\n3. Multi-pitch Strategy:\n- Pitch linking\n- Belay positions\n- Team management\n\n4. Time Planning:\n- Pace assessment\n- Retreat options\n- Bivouac planning',
             tags: ['strategy', 'planning', 'advanced'],
-            is_favorited: false
+            is_favourited: false
         },
         'rescue-systems': {
             id: 'rescue-systems',
             title: 'Advanced Rescue Systems',
             description: '1. Self Rescue:\n- Advanced hauling\n- Complex escapes\n- Solo techniques\n\n2. Partner Rescue:\n- Lowering systems\n- Raising systems\n- Counterweight techniques\n\n3. Team Rescue:\n- Multi-person systems\n- Load transfers\n- Advanced rigging\n\n4. Emergency Response:\n- Communication systems\n- Emergency bivouac\n- External rescue interface',
             tags: ['rescue', 'safety', 'technical'],
-            is_favorited: false
+            is_favourited: false
         }
     };
 
@@ -99,7 +99,7 @@ async function createTrainingResource() {
         id: 'twelve-week-advanced',
         title: '12-Week Advanced Trad Development',
         tags: ['trad', 'outdoor', 'advanced', 'technical'],
-        is_favorited: false,
+        is_favourited: false,
         weeks: [
             {
                 week_number: 1,

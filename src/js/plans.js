@@ -18,8 +18,8 @@ function renderPlans(plans) {
             <div class="plan-header">
                 <h3>${plan.title}</h3>
                 <div class="plan-actions">
-                    <button class="icon-button favorite-btn ${plan.is_favorited ? 'active' : ''}" 
-                            onclick="toggleFavorite(${plan.id}, event)">
+                    <button class="icon-button favourite-btn ${plan.is_favourited ? 'active' : ''}" 
+                            onclick="togglefavourite(${plan.id}, event)">
                         ★
                     </button>
                     <button class="icon-button delete-btn" 
@@ -71,18 +71,18 @@ async function loadPlans() {
 }
 
 function filterPlans() {
-    const favoritesOnly = document.getElementById('favoritesOnly').checked;
+    const favouritesOnly = document.getElementById('favouritesOnly').checked;
     const selectedTag = document.getElementById('tagFilter').value;
     
     const filteredPlans = allPlans.filter(plan => {
-        // Favorites filter
-        const matchesFavorite = !favoritesOnly || plan.is_favorited;
+        // favourites filter
+        const matchesfavourite = !favouritesOnly || plan.is_favourited;
         
         // Tag filter
         const matchesTag = !selectedTag || 
             (plan.tags && plan.tags.split(',').map(t => t.trim()).includes(selectedTag));
         
-        return matchesFavorite && matchesTag;
+        return matchesfavourite && matchesTag;
     });
     
     renderPlans(filteredPlans);
@@ -113,11 +113,11 @@ async function deletePlan(planId, event) {
     }
 }
 
-// Add favorite functionality
-async function toggleFavorite(planId, event) {
+// Add favourite functionality
+async function togglefavourite(planId, event) {
     event.stopPropagation();
     try {
-        const response = await fetch(`/api/plans/${planId}/favorite`, {
+        const response = await fetch(`/api/plans/${planId}/favourite`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -125,12 +125,12 @@ async function toggleFavorite(planId, event) {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to toggle favorite');
+            throw new Error('Failed to toggle favourite');
         }
 
         loadPlans(); // Refresh the plans list
     } catch (error) {
-        console.error('Error toggling favorite:', error);
+        console.error('Error toggling favourite:', error);
     }
 }
 
@@ -161,7 +161,7 @@ async function createNewPlan(title, tags = '') {
     }
 }
 
-document.getElementById('favoritesOnly').addEventListener('change', filterPlans);
+document.getElementById('favouritesOnly').addEventListener('change', filterPlans);
 document.getElementById('tagFilter').addEventListener('change', filterPlans);
 
 // Handle new plan button click

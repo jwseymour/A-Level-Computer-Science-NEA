@@ -54,7 +54,7 @@ db.run(`
     title TEXT NOT NULL,
     description TEXT,
     tags TEXT,
-    is_favorited BOOLEAN DEFAULT 0,
+    is_favourited BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )
@@ -67,7 +67,7 @@ db.run(`
     user_id INTEGER,
     title TEXT NOT NULL,
     tags TEXT,
-    is_favorited BOOLEAN DEFAULT 0,
+    is_favourited BOOLEAN DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )
@@ -166,7 +166,7 @@ app.post('/api/blocks', authenticateUser, (req, res) => {
         title,
         description,
         tags,
-        is_favorited: 0
+        is_favourited: 0
       });
     }
   );
@@ -193,7 +193,7 @@ app.get('/api/blocks', authenticateUser, (req, res) => {
 app.put('/api/blocks/:id', authenticateUser, (req, res) => {
   const blockId = req.params.id;
   const userId = req.user.id;
-  const { title, description, tags, is_favorited } = req.body;
+  const { title, description, tags, is_favourited } = req.body;
 
   // First verify the block belongs to the user
   db.get(
@@ -212,9 +212,9 @@ app.put('/api/blocks/:id', authenticateUser, (req, res) => {
       // Update the block
       db.run(
         `UPDATE training_blocks 
-         SET title = ?, description = ?, tags = ?, is_favorited = ?
+         SET title = ?, description = ?, tags = ?, is_favourited = ?
          WHERE id = ? AND user_id = ?`,
-        [title, description, tags, is_favorited, blockId, userId],
+        [title, description, tags, is_favourited, blockId, userId],
         function(err) {
           if (err) {
             res.status(400).json({ error: err.message });
@@ -226,7 +226,7 @@ app.put('/api/blocks/:id', authenticateUser, (req, res) => {
             title,
             description,
             tags,
-            is_favorited
+            is_favourited
           });
         }
       );
@@ -281,14 +281,14 @@ app.delete('/api/blocks/:id', authenticateUser, (req, res) => {
   );
 });
 
-// Toggle block favorite status
-app.put('/api/blocks/:id/favorite', authenticateUser, (req, res) => {
+// Toggle block favourite status
+app.put('/api/blocks/:id/favourite', authenticateUser, (req, res) => {
   const blockId = req.params.id;
   const userId = req.user.id;
 
-  // First verify the block belongs to the user and get current favorite status
+  // First verify the block belongs to the user and get current favourite status
   db.get(
-      'SELECT is_favorited FROM training_blocks WHERE id = ? AND user_id = ?',
+      'SELECT is_favourited FROM training_blocks WHERE id = ? AND user_id = ?',
       [blockId, userId],
       (err, block) => {
           if (err) {
@@ -300,12 +300,12 @@ app.put('/api/blocks/:id/favorite', authenticateUser, (req, res) => {
               return;
           }
 
-          // Toggle the favorite status
-          const newFavoriteStatus = block.is_favorited ? 0 : 1;
+          // Toggle the favourite status
+          const newfavouriteStatus = block.is_favourited ? 0 : 1;
           
           db.run(
-              'UPDATE training_blocks SET is_favorited = ? WHERE id = ? AND user_id = ?',
-              [newFavoriteStatus, blockId, userId],
+              'UPDATE training_blocks SET is_favourited = ? WHERE id = ? AND user_id = ?',
+              [newfavouriteStatus, blockId, userId],
               function(err) {
                   if (err) {
                       res.status(400).json({ error: err.message });
@@ -313,7 +313,7 @@ app.put('/api/blocks/:id/favorite', authenticateUser, (req, res) => {
                   }
                   res.json({ 
                       success: true, 
-                      is_favorited: newFavoriteStatus 
+                      is_favourited: newfavouriteStatus 
                   });
               }
           );
@@ -351,7 +351,7 @@ app.post('/api/plans', authenticateUser, (req, res) => {
             user_id: userId,
             title,
             tags,
-            is_favorited: 0
+            is_favourited: 0
           });
         }
       );
@@ -364,7 +364,7 @@ app.get('/api/plans', authenticateUser, (req, res) => {
   const userId = req.user.id;
   
   db.all(
-    'SELECT id, title, tags, is_favorited, created_at FROM training_plans WHERE user_id = ? ORDER BY created_at DESC',
+    'SELECT id, title, tags, is_favourited, created_at FROM training_plans WHERE user_id = ? ORDER BY created_at DESC',
     [userId],
     (err, plans) => {
       if (err) {
@@ -452,7 +452,7 @@ app.get('/api/plans/:id', authenticateUser, (req, res) => {
                 user_id: plan.user_id,
                 title: plan.title,
                 tags: plan.tags,
-                is_favorited: plan.is_favorited,
+                is_favourited: plan.is_favourited,
                 created_at: plan.created_at,
                 weeks: formattedWeeks
               });
@@ -468,7 +468,7 @@ app.get('/api/plans/:id', authenticateUser, (req, res) => {
 app.put('/api/plans/:id', authenticateUser, async (req, res) => {
   const planId = req.params.id;
   const userId = req.user.id;
-  const { title, tags, is_favorited, weeks } = req.body;
+  const { title, tags, is_favourited, weeks } = req.body;
 
   // First verify the plan belongs to the user
   db.serialize(() => {
@@ -493,8 +493,8 @@ app.put('/api/plans/:id', authenticateUser, async (req, res) => {
           // Update plan details
           await new Promise((resolve, reject) => {
             db.run(
-              'UPDATE training_plans SET title = ?, tags = ?, is_favorited = ? WHERE id = ?',
-              [title, tags, is_favorited, planId],
+              'UPDATE training_plans SET title = ?, tags = ?, is_favourited = ? WHERE id = ?',
+              [title, tags, is_favourited, planId],
               err => err ? reject(err) : resolve()
             );
           });
@@ -647,14 +647,14 @@ app.delete('/api/plans/:id', authenticateUser, (req, res) => {
   );
 });
 
-// Toggle plan favorite status
-app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
+// Toggle plan favourite status
+app.put('/api/plans/:id/favourite', authenticateUser, (req, res) => {
   const planId = req.params.id;
   const userId = req.user.id;
 
-  // First verify the plan belongs to the user and get current favorite status
+  // First verify the plan belongs to the user and get current favourite status
   db.get(
-    'SELECT is_favorited FROM training_plans WHERE id = ? AND user_id = ?',
+    'SELECT is_favourited FROM training_plans WHERE id = ? AND user_id = ?',
     [planId, userId],
     (err, plan) => {
       if (err) {
@@ -666,12 +666,12 @@ app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
         return;
       }
 
-      // Toggle the favorite status
-      const newFavoriteStatus = plan.is_favorited ? 0 : 1;
+      // Toggle the favourite status
+      const newfavouriteStatus = plan.is_favourited ? 0 : 1;
       
       db.run(
-        'UPDATE training_plans SET is_favorited = ? WHERE id = ? AND user_id = ?',
-        [newFavoriteStatus, planId, userId],
+        'UPDATE training_plans SET is_favourited = ? WHERE id = ? AND user_id = ?',
+        [newfavouriteStatus, planId, userId],
         function(err) {
           if (err) {
             res.status(400).json({ error: err.message });
@@ -679,7 +679,7 @@ app.put('/api/plans/:id/favorite', authenticateUser, (req, res) => {
           }
           res.json({ 
             success: true, 
-            is_favorited: newFavoriteStatus 
+            is_favourited: newfavouriteStatus 
           });
         }
       );
@@ -988,7 +988,7 @@ app.post('/api/plans/copy', authenticateUser, async (req, res) => {
         const createBlockPromises = blockDetails.map(block => 
           new Promise((resolve, reject) => {
             db.run(
-              'INSERT INTO training_blocks (user_id, title, description, tags, is_favorited) VALUES (?, ?, ?, ?, ?)',
+              'INSERT INTO training_blocks (user_id, title, description, tags, is_favourited) VALUES (?, ?, ?, ?, ?)',
               [
                 userId,
                 block.title,
@@ -1009,7 +1009,7 @@ app.post('/api/plans/copy', authenticateUser, async (req, res) => {
         Promise.all(createBlockPromises).then(() => {
           // Create the plan
           db.run(
-            'INSERT INTO training_plans (user_id, title, tags, is_favorited) VALUES (?, ?, ?, ?)',
+            'INSERT INTO training_plans (user_id, title, tags, is_favourited) VALUES (?, ?, ?, ?)',
             [userId, plan.title, plan.tags, 0],
             function(err) {
               if (err) throw err;
